@@ -119,12 +119,17 @@
         <span id="test-score"></span>
       </div>
       <div class="card question-card">
+        <button class="figure-btn" id="btn-figure" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>
+          <span id="btn-figure-text">원본 사진 보기</span>
+        </button>
         <p class="question" id="test-question"></p>
         <div id="test-choices" class="choices"></div>
         <div id="feedback" class="feedback" hidden>
           <p class="verdict" id="feedback-verdict"></p>
           <p class="why" id="feedback-why"></p>
         </div>
+        <button class="btn text small danger" id="btn-remove-q" hidden>이상한 문제예요 · 이 문제 삭제</button>
       </div>
       <div class="test-actions">
         <button class="btn ghost" id="btn-prev">이전</button>
@@ -192,7 +197,7 @@
         <p class="status-line small" id="data-status"></p>
       </div>
       <p class="muted small center">문제는 AI가 만들기 때문에 틀릴 수 있어요. 해설의 근거를 학습지와 대조해 보세요.</p>
-      <p class="muted small center">버전 2026.09.28-5</p>
+      <p class="muted small center">버전 2026.09.28-6</p>
     </section>
   </main>
 
@@ -210,6 +215,15 @@
       <span>설정</span>
     </button>
   </nav>
+
+  <div class="viewer" id="viewer" hidden role="dialog" aria-label="원본 사진">
+    <div class="viewer-bar">
+      <button class="btn ghost small" id="viewer-rotate">돌리기</button>
+      <button class="btn ghost small" id="viewer-zoom">크게</button>
+      <button class="btn primary small" id="viewer-close">닫기</button>
+    </div>
+    <div class="viewer-body" id="viewer-body"><img id="viewer-img" alt="학습지 원본 사진"></div>
+  </div>
 
   <div class="toast" id="toast" role="status" hidden></div>
 

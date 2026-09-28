@@ -37,6 +37,37 @@
   const saveBest = () => write(KEYS.best, store.best);
   const saveHidden = () => write(KEYS.hidden, store.hidden);
 
+  // 사진으로 만든 학습지의 원본 사진은 용량이 커서 IndexedDB에 따로 둔다. 키: "<학습지 id>:<장 번호>"
+  const images = (() => {
+    let dbp = null;
+    const open = () => dbp || (dbp = new Promise((resolve, reject) => {
+      const req = indexedDB.open('jjok', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('images');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    }));
+    const tx = async (mode, fn) => {
+      const db = await open();
+      return new Promise((resolve, reject) => {
+        const t = db.transaction('images', mode);
+        const out = fn(t.objectStore('images'));
+        t.oncomplete = () => resolve(out?.result);
+        t.onerror = () => reject(t.error);
+      });
+    };
+    return {
+      put: (key, blob) => tx('readwrite', (st) => st.put(blob, key)).catch(() => {}),
+      get: (key) => tx('readonly', (st) => st.get(key)).catch(() => null),
+      removeSet: (setId) => tx('readwrite', (st) => st.delete(IDBKeyRange.bound(`${setId}:`, `${setId}:\uffff`))).catch(() => {}),
+    };
+  })();
+
+  // 문제마다 고정 id를 붙여 둔다(문제를 하나 지워도 오답노트·기록이 어긋나지 않게).
+  if (store.userSets.some((s) => s.questions.some((q) => !q.qid))) {
+    for (const set of store.userSets) set.questions.forEach((q, i) => { if (!q.qid) q.qid = `${set.id}#${i}`; });
+    saveSets();
+  }
+
   function allSets() {
     const builtin = (window.BUILTIN_SETS || [])
       .filter((s) => !store.hidden.includes(s.id))
@@ -56,6 +87,16 @@
     for (const k of Object.keys(store.wrong)) if (k.startsWith(`${id}#`)) delete store.wrong[k];
     delete store.best[id];
     saveWrong(); saveBest();
+    images.removeSet(id);
+  }
+
+  function removeQuestion(qid) {
+    const set = store.userSets.find((s) => qid.startsWith(`${s.id}#`));
+    if (!set) return false;
+    set.questions = set.questions.filter((q) => q.qid !== qid);
+    if (store.wrong[qid]) { delete store.wrong[qid]; saveWrong(); }
+    saveSets();
+    return true;
   }
   function findSet(id) {
     if (id === 'all') return combinedSet();
@@ -278,6 +319,10 @@
     $('test-no').textContent = `${state.no + 1} / ${total}`;
     $('test-score').textContent = answered ? `맞음 ${right} · 틀림 ${answered - right}` : '';
     $('test-question').textContent = q.question;
+    $('btn-figure').hidden = !q.img;
+    $('btn-figure').classList.toggle('need', !!q.figure);
+    $('btn-figure-text').textContent = q.figure ? '자료를 보고 푸는 문제 · 사진 보기' : '원본 사진 보기';
+    $('btn-remove-q').hidden = !done || !store.userSets.some((s) => q.qid?.startsWith(`${s.id}#`));
 
     const box = $('test-choices');
     box.innerHTML = '';
@@ -319,12 +364,62 @@
       store.wrong[q.qid] = {
         qid: q.qid, from: q.from || state.set.title,
         question: q.question, choices: q.choices, correctIndex: q.correctIndex, explanation: q.explanation,
+        img: q.img, figure: q.figure,
         misses: (prev?.misses || 0) + 1, at: Date.now(),
       };
       saveWrong();
     }
     renderQuestion();
   }
+
+  $('btn-remove-q').onclick = () => {
+    const q = state.round[state.no];
+    if (!removeQuestion(q.qid)) return;
+    state.round.splice(state.no, 1);
+    state.answers.splice(state.no, 1);
+    toast('문제를 삭제했어요');
+    if (!state.round.length) { openDetail(state.set.id); return; }
+    if (state.no >= state.round.length) state.no = state.round.length - 1;
+    renderQuestion();
+  };
+
+  // ── 원본 사진 보기 ─────────────────────────────────
+  let viewerUrl = null;
+  let viewerDeg = 0;
+  async function showViewer(key) {
+    const blob = await images.get(key);
+    if (!blob) { toast('원본 사진을 찾지 못했어요'); return; }
+    if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+    viewerUrl = URL.createObjectURL(blob);
+    viewerDeg = 0;
+    $('viewer-img').src = viewerUrl;
+    $('viewer-body').classList.remove('zoom');
+    $('viewer-zoom').textContent = '크게';
+    $('viewer').hidden = false;
+  }
+  // 사진이 옆으로 누워 있는 경우가 많아 캔버스로 90도씩 돌린다.
+  $('viewer-rotate').onclick = () => {
+    const img = new Image();
+    img.onload = () => {
+      viewerDeg = (viewerDeg + 90) % 360;
+      const c = document.createElement('canvas');
+      const side = viewerDeg % 180 !== 0;
+      c.width = side ? img.naturalHeight : img.naturalWidth;
+      c.height = side ? img.naturalWidth : img.naturalHeight;
+      const g = c.getContext('2d');
+      g.translate(c.width / 2, c.height / 2);
+      g.rotate((viewerDeg * Math.PI) / 180);
+      g.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      $('viewer-img').src = c.toDataURL('image/jpeg', 0.9);
+    };
+    img.src = viewerUrl;
+  };
+  $('viewer-zoom').onclick = () => {
+    const on = $('viewer-body').classList.toggle('zoom');
+    $('viewer-zoom').textContent = on ? '맞추기' : '크게';
+  };
+  $('viewer-close').onclick = () => { $('viewer').hidden = true; };
+  $('btn-figure').onclick = () => { const q = state.round[state.no]; if (q?.img) showViewer(q.img); };
 
   $('btn-prev').onclick = () => { if (state.no > 0) { state.no--; renderQuestion(); } };
   $('btn-next').onclick = () => {
@@ -544,6 +639,9 @@ ${pages > 1 ? `이 사진은 학습지 ${pages}장 중 ${page}번째 장이다. 
 - 보기 5개는 같은 종류(모두 인물, 모두 지역, 모두 완결된 문장 등)로 맞추고, 각 보기는 그것만 읽어도 뜻이 통하는 완결된 말이어야 한다. 학습지 문장을 중간에서 자른 조각을 보기로 쓰지 않는다.
 - 정답이 아닌 보기 4개는 학습지 기준으로 분명히 틀려야 한다. 뜻이 같은 보기 두 개(예: "한성"과 "국내")를 함께 넣지 않는다.
 - 같은 내용을 문구만 바꿔 두 번 묻지 않는다.
+- 학생은 시험 볼 때 사진을 보지 않고 문제 글만 본다. 그러니 "17번 문제", "위 자료", "보기 중", "(가)", "그림의 A" 처럼 사진을 봐야만 뭘 가리키는지 알 수 있는 말로 문제를 쓰지 않는다.
+- 그래프·표·지도·그림 내용을 묻고 싶으면 풀이에 필요한 수치나 사실을 문제 글 안에 직접 적어 준다. 그래도 자료를 직접 봐야만 풀 수 있는 문제는 "figure": true로 표시한다(학생이 원본 사진을 열어 볼 수 있다). 나머지는 "figure": false.
+- 기출문제·문제지 사진이면 원래 문제를 번호째 옮기지 말고, 그 문제와 해설이 다루는 개념·사실을 묻는 새 문제로 만든다.
 - 요청한 문항 수를 채운다. 이 장의 모든 항목(번호·소제목)을 빠짐없이 골고루 다루고, 한 항목에서 서로 다른 사실을 묻는 문제를 여러 개 내도 된다.
 - 이 장에 문제로 낼 내용이 정말 부족할 때만 요청보다 적게 낸다. 그때도 없는 내용을 지어내지는 않는다.
 - 정답은 보기 5개 중 정확히 하나다. 정답 위치를 골고루 섞는다.
@@ -554,7 +652,14 @@ ${subject ? `과목: ${subject}` : '과목: 학습지를 보고 판단'}
 ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 제목을 그대로 쓴다'}
 
 아래 JSON 하나만 출력한다. 다른 말은 쓰지 않는다.
-{"subject":"과목","title":"학습지 제목","questions":[{"question":"문제","choices":["보기1","보기2","보기3","보기4","보기5"],"correctIndex":0,"explanation":"근거"}]}`;
+{"subject":"과목","title":"학습지 제목","questions":[{"question":"문제","choices":["보기1","보기2","보기3","보기4","보기5"],"correctIndex":0,"explanation":"근거","figure":false}]}`;
+  }
+
+  function b64ToBlob(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: 'image/jpeg' });
   }
 
   function parseJsonText(text) {
@@ -577,7 +682,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       if (!question || choices.length !== 5 || choices.some((c) => !c)) return null;
       if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 4) return null;
       if (new Set(choices).size !== 5) return null;
-      return { question, choices, correctIndex, explanation: explanation || '학습지 내용' };
+      return { question, choices, correctIndex, explanation: explanation || '학습지 내용', figure: q.figure === true };
     }).filter(Boolean);
   }
 
@@ -699,25 +804,25 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
 
     try {
       say('사진 준비 중…');
-      const images = [];
-      for (const f of photos) images.push(await toBase64Jpeg(f));
+      const images64 = [];
+      for (const f of photos) images64.push(await toBase64Jpeg(f));
       const perPage = Number($('in-count').value) || 10;
       const subject = $('in-subject').value.trim();
       const title = $('in-title').value.trim();
 
       // 사진을 한꺼번에 보내면 AI가 문제를 적게 만든다. 한 장씩 따로 만들어 합친다(동시에 2장씩).
-      const results = new Array(images.length).fill(null);
+      const results = new Array(images64.length).fill(null);
       const usedModels = new Set();
       let lastError = null;
       let done = 0;
       const progress = (extra) => {
         const made = results.reduce((n, r) => n + (r?.questions.length || 0), 0);
-        say(`사진 ${images.length}장 중 ${done}장 완료 · 지금까지 ${made}문제${extra ? ` · ${extra}` : ''}`);
+        say(`사진 ${images64.length}장 중 ${done}장 완료 · 지금까지 ${made}문제${extra ? ` · ${extra}` : ''}`);
       };
       progress();
       let next = 0;
       const worker = async () => {
-        while (next < images.length) {
+        while (next < images64.length) {
           const i = next++;
           await makePage(i);
           done++;
@@ -727,7 +832,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       const makePage = async (i) => {
         try {
           const { value, usedModel } = await callWithFallback(
-            buildPrompt(perPage, subject, title, i + 1, images.length), [images[i]],
+            buildPrompt(perPage, subject, title, i + 1, images64.length), [images64[i]],
             (m, round, waitMs) => {
               if (!m) progress(`모든 모델이 붐벼서 ${Math.ceil(Math.min(waitMs, 30000) / 1000)}초 기다리는 중`);
               else if (m !== model()) progress(`기본 모델이 붐벼서 ${m} 사용 중`);
@@ -736,7 +841,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
               const raw = parseJsonText(text);
               const questions = normalizeQuestions(raw);
               if (!questions.length) throw new Error('parse');
-              return { raw, questions };
+              return { raw, questions: questions.map((q) => ({ ...q, page: i })) };
             },
           );
           results[i] = value;
@@ -774,13 +879,16 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       const raw = results.find((r) => r?.raw)?.raw || {};
       const usedModel = [...usedModels].find((m) => LITE.test(m)) || [...usedModels][0] || '';
 
+      const setId = `u${Date.now().toString(36)}`;
       const set = {
-        id: `u${Date.now().toString(36)}`,
+        id: setId,
         subject: subject || String(raw.subject || '').trim() || '학습지',
         title: title || String(raw.title || '').trim() || `학습지 ${new Date().toLocaleDateString('ko-KR')}`,
         createdAt: Date.now(),
-        questions,
+        questions: questions.map(({ page, ...q }, n) => ({ ...q, qid: `${setId}#${n}`, img: `${setId}:${page}` })),
       };
+      say('원본 사진 저장 중…');
+      await Promise.all(images64.map((b64, i) => images.put(`${setId}:${i}`, b64ToBlob(b64))));
       store.userSets = [set, ...store.userSets];
       if (!saveSets()) throw new Error('저장 공간이 부족해 학습지를 저장하지 못했어요.');
 
