@@ -598,23 +598,38 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // 같은 모델로 한 번 더 기다렸다 시도하고, 그래도 안 되면 다음 모델로 넘어간다.
+  // 붐비거나(503) 사용량을 넘은(429) 모델은 잠시 쉬게 하고, 그동안은 다른 장도 바로 다음 모델로 보낸다.
+  // 그래야 사진이 많을 때 막힌 모델에 계속 두드리느라 시간을 버리지 않는다.
+  const cooldown = {};
+  function coolDown(m, status) {
+    const ms = status === 429 ? 90000 : status === 404 ? 3600000 : 45000;
+    cooldown[m] = Date.now() + ms;
+  }
+
   // accept(text)는 응답을 문제 목록으로 바꾸고, 쓸 만한 문제가 없으면 예외를 던진다(그때도 다음 모델로).
   async function callWithFallback(prompt, images, onModel, accept) {
     const chosen = model();
-    const order = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
+    const base = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
     let lastErr = null;
-    for (const m of order) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        onModel(m, attempt);
+    for (let round = 0; round < 4; round++) {
+      const now = Date.now();
+      const order = base.filter((m) => !(cooldown[m] > now));
+      if (!order.length) {
+        const soonest = Math.min(...base.map((m) => cooldown[m]));
+        onModel(null, round, soonest - now);
+        await wait(Math.min(Math.max(soonest - now, 2000), 30000));
+        continue;
+      }
+      for (const m of order) {
+        if (cooldown[m] > Date.now()) continue;
+        onModel(m, round);
         try {
           const text = await callGemini(m, prompt, images);
           return { value: accept(text), usedModel: m };
         } catch (e) {
           lastErr = e;
-          if (e.retryable === false && e.status) throw e;
-          if (e.status === 503 || e.status === 500) { await wait(3000 + attempt * 3000); continue; }
-          break;
+          if (e.status && e.retryable === false) throw e;
+          if (e.status) coolDown(m, e.status);
         }
       }
     }
@@ -713,7 +728,10 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
         try {
           const { value, usedModel } = await callWithFallback(
             buildPrompt(perPage, subject, title, i + 1, images.length), [images[i]],
-            (m, attempt) => { if (m !== model() || attempt) progress(`서버가 붐벼서 다시 시도 중 (${m})`); },
+            (m, round, waitMs) => {
+              if (!m) progress(`모든 모델이 붐벼서 ${Math.ceil(Math.min(waitMs, 30000) / 1000)}초 기다리는 중`);
+              else if (m !== model()) progress(`기본 모델이 붐벼서 ${m} 사용 중`);
+            },
             (text) => {
               const raw = parseJsonText(text);
               const questions = normalizeQuestions(raw);
