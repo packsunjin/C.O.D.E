@@ -636,7 +636,18 @@
     }
   }
 
-  function buildPrompt(count, subject, title, page, pages) {
+  // 기출문제 시험지는 해설이 없고 그래프·표가 대부분이라, AI가 교과 개념 지식을 보태 개념 문제로 바꾼다.
+  const EXAM_RULES = `
+[기출문제 시험지 모드]
+이 사진은 해설 없는 기출문제 시험지다. 아래 규칙이 위의 "학습지에 있는 내용만" 규칙보다 우선한다.
+- 시험지의 각 문항이 어떤 교과 개념(원리·특징·비교·인과)을 묻는지 파악하고, 고등학교 교과서 수준의 정확한 지식으로 그 개념을 묻는 새 문제를 만든다.
+- 시험지에 없는 설명을 보탤 수 있지만, 교과서에서 확실히 다루는 사실만 쓴다. 확실하지 않으면 그 개념은 건너뛴다.
+- 그래프·표의 수치를 외우게 하지 말고, 그 자료가 보여 주는 개념(예: 노년층 비중이 높은 나라의 특징)을 묻는다.
+- 오답 보기도 같은 단원의 헷갈리기 쉬운 개념에서 가져온다.
+- explanation은 "AI 설명: "으로 시작해 왜 그 답이 맞는지 개념을 한두 문장으로 설명한다.
+`;
+
+  function buildPrompt(count, subject, title, page, pages, exam) {
     return `너는 학생이 찍어 보낸 학습지 사진을 보고 5지선다 문제를 만드는 출제자다. 학생은 이 문제로 혼자 시험을 본다.
 
 사진을 직접 보고 읽어라. 인쇄된 글자뿐 아니라 빈칸에 손글씨로 채운 답과 필기도 학습지 내용이다.
@@ -673,6 +684,7 @@ ${pages > 1 ? `이 사진은 학습지 ${pages}장 중 ${page}번째 장이다. 
 ${subject ? `과목: ${subject}` : '과목: 학습지를 보고 판단'}
 ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 제목을 그대로 쓴다'}
 
+${exam ? EXAM_RULES : ''}
 아래 JSON 하나만 출력한다. 다른 말은 쓰지 않는다.
 {"subject":"과목","title":"학습지 제목","questions":[{"question":"문제","choices":["보기1","보기2","보기3","보기4","보기5"],"correctIndex":0,"explanation":"근거","figure":false}]}`;
   }
@@ -849,6 +861,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       const perPage = Number($('in-count').value) || 10;
       const subject = $('in-subject').value.trim();
       const title = $('in-title').value.trim();
+      const exam = $('in-exam').checked;
 
       // 사진을 한꺼번에 보내면 AI가 문제를 적게 만든다. 한 장씩 따로 만들어 합친다(동시에 2장씩).
       const results = new Array(images64.length).fill(null);
@@ -872,7 +885,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       const makePage = async (i) => {
         try {
           const { value, usedModel } = await callWithFallback(
-            buildPrompt(perPage, subject, title, i + 1, images64.length), [images64[i]],
+            buildPrompt(perPage, subject, title, i + 1, images64.length, exam), [images64[i]],
             (m, round, waitMs) => {
               if (!m) progress(`모든 모델이 붐벼서 ${Math.ceil(Math.min(waitMs, 30000) / 1000)}초 기다리는 중`);
               else if (m !== model()) progress(`기본 모델이 붐벼서 ${m} 사용 중`);

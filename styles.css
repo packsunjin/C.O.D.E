@@ -339,3 +339,6 @@ body.in-test main { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px
   background: var(--accent-soft); display: grid; gap: 10px; justify-items: start;
 }
 .clean-box .btn { min-height: 40px; }
+
+.switch-row.inline { margin-block-start: 16px; padding: 12px 14px; background: var(--bg); }
+.block { display: block; }
