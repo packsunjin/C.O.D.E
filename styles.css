@@ -145,6 +145,24 @@ button:focus-visible, input:focus-visible, select:focus-visible, .btn:focus-visi
 .set-item.combined { background: transparent; border-style: dashed; box-shadow: none; }
 .best { font-variant-numeric: tabular-nums; }
 
+.head-right { display: flex; align-items: center; gap: 4px; }
+.head-right .btn.text { min-height: 36px; padding: 0 10px; color: var(--accent); font-weight: 600; }
+.edit-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 8px 12px 16px;
+}
+.edit-row.confirming { display: block; padding: 14px 16px; border-color: color-mix(in srgb, var(--wrong) 45%, var(--line)); background: var(--wrong-bg); }
+.edit-row.confirming .muted { display: block; }
+.edit-row.confirming .btn-row { margin-block-start: 10px; }
+.edit-info { flex: 1; display: grid; min-width: 0; }
+.edit-info .subj { font-size: .76rem; font-weight: 700; color: var(--accent); }
+.edit-info .name { font-family: var(--serif); font-weight: 700; line-height: 1.45; }
+.edit-info .meta { font-size: .8rem; color: var(--muted); }
+.icon-btn.danger { color: var(--wrong); flex: none; }
+.icon-btn.danger:active { background: var(--wrong-bg); }
+#btn-restore { margin-block-start: 6px; color: var(--accent); }
+
 .switch-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line);

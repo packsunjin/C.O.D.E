@@ -40,8 +40,12 @@
 
       <div class="section-head">
         <h2>내 학습지</h2>
-        <span class="muted small" id="sets-count"></span>
+        <span class="head-right">
+          <span class="muted small" id="sets-count"></span>
+          <button class="btn text small" id="btn-edit-sets">편집</button>
+        </span>
       </div>
+      <p class="muted small center" id="sets-empty" hidden>학습지가 없어요. 위 버튼으로 사진을 올려 만들어 보세요.</p>
       <div id="set-list" class="list"></div>
 
       <label class="switch-row" for="opt-shuffle">
@@ -161,7 +165,7 @@
         </ol>
         <div class="field">
           <label for="in-key">API 키</label>
-          <input type="password" id="in-key" placeholder="AIza…" autocomplete="off" spellcheck="false">
+          <input type="password" id="in-key" placeholder="AIza… 또는 AQ.…" autocomplete="off" spellcheck="false">
         </div>
         <div class="field">
           <label for="in-model">모델</label>
@@ -184,6 +188,7 @@
           <button class="btn ghost grow" id="btn-export">내보내기</button>
           <label class="btn ghost grow" for="in-import">가져오기<input type="file" id="in-import" accept="application/json" hidden></label>
         </div>
+        <button class="btn text" id="btn-restore" hidden>삭제한 기본 학습지 다시 보이기</button>
         <p class="status-line small" id="data-status"></p>
       </div>
       <p class="muted small center">문제는 AI가 만들기 때문에 틀릴 수 있어요. 해설의 근거를 학습지와 대조해 보세요.</p>

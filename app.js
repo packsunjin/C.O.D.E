@@ -14,6 +14,7 @@
     wrong: 'jjok:wrong',
     best: 'jjok:best',
     shuffle: 'jjok:shuffle',
+    hidden: 'jjok:hiddenBuiltin',
   };
   function read(key, fallback) {
     try {
@@ -29,14 +30,32 @@
     userSets: read(KEYS.sets, []),
     wrong: read(KEYS.wrong, {}),
     best: read(KEYS.best, {}),
+    hidden: read(KEYS.hidden, []),
   };
   const saveSets = () => write(KEYS.sets, store.userSets);
   const saveWrong = () => write(KEYS.wrong, store.wrong);
   const saveBest = () => write(KEYS.best, store.best);
+  const saveHidden = () => write(KEYS.hidden, store.hidden);
 
   function allSets() {
-    const builtin = (window.BUILTIN_SETS || []).map((s) => ({ ...s, builtin: true }));
+    const builtin = (window.BUILTIN_SETS || [])
+      .filter((s) => !store.hidden.includes(s.id))
+      .map((s) => ({ ...s, builtin: true }));
     return [...store.userSets, ...builtin];
+  }
+
+  // 사진으로 만든 학습지는 지우고, 기본 학습지는 숨긴다(설정에서 되돌릴 수 있음).
+  function deleteSet(id) {
+    if ((window.BUILTIN_SETS || []).some((s) => s.id === id)) {
+      if (!store.hidden.includes(id)) store.hidden.push(id);
+      saveHidden();
+    } else {
+      store.userSets = store.userSets.filter((s) => s.id !== id);
+      saveSets();
+    }
+    for (const k of Object.keys(store.wrong)) if (k.startsWith(`${id}#`)) delete store.wrong[k];
+    delete store.best[id];
+    saveWrong(); saveBest();
   }
   function findSet(id) {
     if (id === 'all') return combinedSet();
@@ -108,13 +127,27 @@
   }
 
   // ── 학습지 목록 ─────────────────────────────────────
+  let editing = false;
+  let confirmId = null;
+
+  $('btn-edit-sets').onclick = () => {
+    editing = !editing;
+    confirmId = null;
+    renderSets();
+  };
+
   function renderSets() {
     const sets = allSets();
-    const entries = sets.length > 1 ? [...sets, combinedSet()] : sets;
+    if (!sets.length) editing = false;
+    const entries = sets.length > 1 && !editing ? [...sets, combinedSet()] : sets;
     $('sets-count').textContent = `${sets.length}개`;
+    $('btn-edit-sets').hidden = !sets.length;
+    $('btn-edit-sets').textContent = editing ? '완료' : '편집';
+    $('sets-empty').hidden = sets.length > 0;
     const list = $('set-list');
     list.innerHTML = '';
     for (const s of entries) {
+      if (editing) { list.append(editRow(s)); continue; }
       const b = document.createElement('button');
       b.className = `set-item${s.combined ? ' combined' : ''}`;
       const best = store.best[s.id];
@@ -132,6 +165,40 @@
     $('wrong-dot').hidden = Object.keys(store.wrong).length === 0;
   }
 
+  function editRow(s) {
+    const row = document.createElement('div');
+    row.className = 'edit-row';
+    if (confirmId === s.id) {
+      row.classList.add('confirming');
+      row.innerHTML = `
+        <p><strong>${esc(s.title)}</strong>을(를) 삭제할까요?
+        <span class="muted small">${s.builtin ? '기본 학습지는 설정에서 다시 보이게 할 수 있어요.' : '되돌릴 수 없어요.'}</span></p>
+        <div class="btn-row">
+          <button class="btn danger-fill" data-act="yes">삭제</button>
+          <button class="btn ghost" data-act="no">취소</button>
+        </div>`;
+      row.querySelector('[data-act=yes]').onclick = () => {
+        deleteSet(s.id);
+        confirmId = null;
+        toast('학습지를 삭제했어요');
+        renderSets();
+      };
+      row.querySelector('[data-act=no]').onclick = () => { confirmId = null; renderSets(); };
+      return row;
+    }
+    row.innerHTML = `
+      <div class="edit-info">
+        <span class="subj">${esc(s.subject || '학습지')}</span>
+        <span class="name">${esc(s.title)}</span>
+        <span class="meta">${s.questions.length}문제${s.builtin ? ' · 기본' : ''}</span>
+      </div>
+      <button class="icon-btn danger" aria-label="${esc(s.title)} 삭제">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+      </button>`;
+    row.querySelector('button').onclick = () => { confirmId = s.id; renderSets(); };
+    return row;
+  }
+
   $('opt-shuffle').checked = read(KEYS.shuffle, true) !== false;
   $('opt-shuffle').onchange = (e) => write(KEYS.shuffle, e.target.checked);
 
@@ -146,7 +213,7 @@
     $('detail-meta').textContent = `${s.questions.length}문제` + (best != null ? ` · 최고 점수 ${best}%` : '');
     $('detail-list').hidden = true;
     $('btn-toggle-answers').textContent = '정답 보기';
-    $('btn-delete-set').hidden = !!(s.builtin || s.combined);
+    $('btn-delete-set').hidden = !!s.combined;
     $('delete-confirm').hidden = true;
     go('detail', s.subject || '학습지');
   }
@@ -167,11 +234,7 @@
   $('btn-delete-set').onclick = () => { $('delete-confirm').hidden = false; };
   $('btn-delete-no').onclick = () => { $('delete-confirm').hidden = true; };
   $('btn-delete-yes').onclick = () => {
-    const id = state.set.id;
-    store.userSets = store.userSets.filter((s) => s.id !== id);
-    for (const k of Object.keys(store.wrong)) if (k.startsWith(`${id}#`)) delete store.wrong[k];
-    delete store.best[id];
-    saveSets(); saveWrong(); saveBest();
+    deleteSet(state.set.id);
     toast('학습지를 삭제했어요');
     renderSets();
     go('sets');
@@ -353,7 +416,15 @@
     if (!$('in-model').value) $('in-model').value = DEFAULT_MODEL;
     setStatus('key-status', apiKey() ? '키가 저장되어 있어요.' : '아직 키가 없어요.', apiKey() ? 'ok' : '');
     setStatus('data-status', '', '');
+    $('btn-restore').hidden = store.hidden.length === 0;
   }
+  $('btn-restore').onclick = () => {
+    const n = store.hidden.length;
+    store.hidden = [];
+    saveHidden();
+    $('btn-restore').hidden = true;
+    setStatus('data-status', `기본 학습지 ${n}개를 다시 보이게 했어요.`, 'ok');
+  };
   function setStatus(id, text, kind) {
     const el = $(id);
     el.textContent = text;
@@ -458,6 +529,10 @@
 - 학습지에 있는 내용만 쓴다. 학습지에 없는 사실·숫자·정의·표현을 지어내 문제나 정답에 넣지 않는다.
 - 오답 보기 4개도 가능한 한 학습지에 나온 다른 용어·인물·사건·연도에서 가져온다. 학습지에 없는 낯선 이름을 오답으로 쓰지 않는다.
 - 알아보기 어려운 글씨나 비어 있는 빈칸은 문제로 쓰지 않는다.
+- X표나 줄로 지운 항목은 학습지에서 뺀 내용이다. 문제로도, 정답으로도 쓰지 않는다.
+- 사진이 흐려 글자가 조금 깨져 보이면 학습지 문맥으로 바로잡아 올바른 용어로 쓴다. 깨진 글자를 그대로 옮기지 않는다.
+- 보기 5개는 같은 종류(모두 인물, 모두 지역, 모두 완결된 문장 등)로 맞추고, 각 보기는 그것만 읽어도 뜻이 통하는 완결된 말이어야 한다. 학습지 문장을 중간에서 자른 조각을 보기로 쓰지 않는다.
+- 정답이 아닌 보기 4개는 학습지 기준으로 분명히 틀려야 한다. 뜻이 같은 보기 두 개(예: "한성"과 "국내")를 함께 넣지 않는다.
 - 같은 내용을 문구만 바꿔 두 번 묻지 않는다.
 - 문항 수를 채우려고 억지로 만들지 않는다. 내용이 적으면 요청보다 적게 낸다.
 - 정답은 보기 5개 중 정확히 하나다. 정답 위치를 골고루 섞는다.
@@ -495,22 +570,49 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
     }).filter(Boolean);
   }
 
-  async function explainHttp(res) {
+  async function explainHttp(res, m = model()) {
     let msg = '';
     try { msg = (await res.json())?.error?.message || ''; } catch {}
     if (res.status === 400 && /api key/i.test(msg)) return 'API 키가 올바르지 않아요. 설정에서 다시 확인해 주세요.';
     if (res.status === 401 || res.status === 403) return 'API 키가 거부됐어요. 키를 새로 만들어 설정에 저장해 주세요.';
-    if (res.status === 404) return `모델을 찾지 못했어요(${model()}). 설정에서 다른 모델을 골라 주세요.`;
+    if (res.status === 404) return `모델을 찾지 못했어요(${m}). 설정에서 다른 모델을 골라 주세요.`;
     if (res.status === 429) return '무료 사용량을 잠시 넘었어요. 1~2분 뒤에 다시 시도해 주세요.';
     if (res.status >= 500) return '구글 서버가 잠시 응답하지 않아요. 조금 뒤 다시 시도해 주세요.';
     return `요청이 실패했어요 (${res.status}) ${msg}`.trim();
   }
 
+  // 무료 모델은 사람이 몰리면 503(과부하)을 자주 낸다. 그때는 다음 모델로 넘어간다.
+  const FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+  const LITE = /lite/;
+
+  async function callWithFallback(prompt, images, onModel) {
+    const chosen = model();
+    const order = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
+    let lastErr = null;
+    for (const m of order) {
+      onModel(m);
+      try {
+        return { text: await callGemini(m, prompt, images), usedModel: m };
+      } catch (e) {
+        lastErr = e;
+        if (!e.retryable) throw e;
+      }
+    }
+    throw new Error(lastErr?.status === 429
+      ? '무료 사용량을 잠시 넘었어요. 1~2분 뒤에 다시 시도해 주세요.'
+      : '지금 모든 무료 모델에 사람이 몰려 있어요. 잠시 뒤에 다시 시도해 주세요.');
+  }
+
   // generateContent가 기본. 이 모델이 그 방식을 안 받으면(404) 새 Interactions 방식으로 한 번 더 시도한다.
-  async function callGemini(prompt, images, signal) {
+  async function callGemini(m, prompt, images, signal) {
     const key = apiKey();
-    const m = model();
     const headers = { 'Content-Type': 'application/json', 'x-goog-api-key': key };
+    const fail = async (res) => {
+      const err = new Error(await explainHttp(res, m));
+      err.status = res.status;
+      err.retryable = res.status === 503 || res.status === 429 || res.status === 500 || res.status === 404;
+      return err;
+    };
 
     const res = await fetch(`${API_BASE}/models/${encodeURIComponent(m)}:generateContent`, {
       method: 'POST', headers, signal,
@@ -532,7 +634,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       }
       return text;
     }
-    if (res.status !== 404) throw new Error(await explainHttp(res));
+    if (res.status !== 404) throw await fail(res);
 
     const res2 = await fetch(`${API_BASE}/interactions`, {
       method: 'POST', headers, signal,
@@ -542,7 +644,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
         response_format: { type: 'text', mime_type: 'application/json' },
       }),
     });
-    if (!res2.ok) throw new Error(await explainHttp(res2));
+    if (!res2.ok) throw await fail(res2);
     const d = await res2.json();
     const text = d?.interaction?.output_text ?? d?.output_text
       ?? (d?.outputs || d?.interaction?.outputs || []).map((o) => o.text || '').join('');
@@ -568,8 +670,11 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       const subject = $('in-subject').value.trim();
       const title = $('in-title').value.trim();
 
-      say(`AI가 사진 ${images.length}장을 읽고 문제를 만드는 중…`);
-      const text = await callGemini(buildPrompt(count, subject, title), images);
+      const { text, usedModel } = await callWithFallback(buildPrompt(count, subject, title), images, (m) => {
+        say(m === model()
+          ? `AI가 사진 ${images.length}장을 읽고 문제를 만드는 중…`
+          : `사람이 몰려 다른 모델(${m})로 다시 시도하는 중…`);
+      });
       let raw;
       try { raw = parseJsonText(text); } catch { throw new Error('AI 응답을 읽지 못했어요. 문항 수를 줄여서 다시 시도해 주세요.'); }
       const questions = normalizeQuestions(raw);
@@ -589,7 +694,9 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       $('in-photo').value = '';
       $('thumbs').innerHTML = '';
       $('in-title').value = '';
-      toast(`${questions.length}문제를 만들었어요`);
+      toast(LITE.test(usedModel)
+        ? `${questions.length}문제를 만들었어요 · 가벼운 모델이라 문제를 꼭 확인하세요`
+        : `${questions.length}문제를 만들었어요`);
       openDetail(set.id);
     } catch (e) {
       err.hidden = false;
