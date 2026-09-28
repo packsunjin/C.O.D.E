@@ -255,6 +255,10 @@
     $('detail-list').hidden = true;
     $('btn-toggle-answers').textContent = '정답 보기';
     $('btn-delete-set').hidden = !!s.combined;
+    const userSet = store.userSets.find((u) => u.id === s.id);
+    const bad = userSet ? userSet.questions.filter(isBadQuestion).length : 0;
+    $('clean-box').hidden = !bad;
+    $('clean-text').textContent = `시험지 번호를 묻거나 사진 없이는 풀 수 없는 문제 ${bad}개를 찾았어요.`;
     $('delete-confirm').hidden = true;
     go('detail', s.subject || '학습지');
   }
@@ -272,6 +276,14 @@
     $('btn-toggle-answers').textContent = '정답 숨기기';
   };
   $('btn-start').onclick = () => startRound(state.set, state.set.questions);
+  $('btn-clean').onclick = () => {
+    const set = store.userSets.find((u) => u.id === state.set.id);
+    if (!set) return;
+    const bad = set.questions.filter(isBadQuestion);
+    for (const q of bad) removeQuestion(q.qid);
+    toast(`문제 ${bad.length}개를 지웠어요`);
+    openDetail(set.id);
+  };
   $('btn-delete-set').onclick = () => { $('delete-confirm').hidden = false; };
   $('btn-delete-no').onclick = () => { $('delete-confirm').hidden = true; };
   $('btn-delete-yes').onclick = () => {
@@ -642,6 +654,16 @@ ${pages > 1 ? `이 사진은 학습지 ${pages}장 중 ${page}번째 장이다. 
 - 학생은 시험 볼 때 사진을 보지 않고 문제 글만 본다. 그러니 "17번 문제", "위 자료", "보기 중", "(가)", "그림의 A" 처럼 사진을 봐야만 뭘 가리키는지 알 수 있는 말로 문제를 쓰지 않는다.
 - 그래프·표·지도·그림 내용을 묻고 싶으면 풀이에 필요한 수치나 사실을 문제 글 안에 직접 적어 준다. 그래도 자료를 직접 봐야만 풀 수 있는 문제는 "figure": true로 표시한다(학생이 원본 사진을 열어 볼 수 있다). 나머지는 "figure": false.
 - 기출문제·문제지 사진이면 원래 문제를 번호째 옮기지 말고, 그 문제와 해설이 다루는 개념·사실을 묻는 새 문제로 만든다.
+  시험 연도·시험 이름·문항 번호·(가)(나)·A국 같은 기호는 문제에 절대 쓰지 않는다.
+- 보기끼리 겹치면 안 된다. "이집트", "일본", "이집트와 일본"을 함께 보기로 내지 않는다.
+
+나쁜 예(이렇게 만들면 안 된다):
+- "2020학년도 수능 15번 문항 그래프에 포함되지 않는 국가는?" → 시험지를 외우는 문제. 공부가 안 된다.
+- "17번 문제의 보기 중 이란에 대한 설명으로 옳은 것은?" → 사진 없이는 풀 수 없다.
+좋은 예(이렇게 만든다):
+- "합계 출산율이 낮고 노년층 인구 비중이 높은 국가에서 나타나는 특징으로 옳은 것은?"
+- "석유 소비 비중이 높고 천연가스 생산이 많은 서남아시아 국가의 에너지 특징으로 옳은 것은?"
+  (자료의 수치가 필요하면 "A 국가는 석유 공급 비율이 60%, 천연가스가 30%이다"처럼 문제 글에 적는다)
 - 요청한 문항 수를 채운다. 이 장의 모든 항목(번호·소제목)을 빠짐없이 골고루 다루고, 한 항목에서 서로 다른 사실을 묻는 문제를 여러 개 내도 된다.
 - 이 장에 문제로 낼 내용이 정말 부족할 때만 요청보다 적게 낸다. 그때도 없는 내용을 지어내지는 않는다.
 - 정답은 보기 5개 중 정확히 하나다. 정답 위치를 골고루 섞는다.
@@ -671,6 +693,24 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
     throw new Error('parse');
   }
 
+  // AI가 규칙을 어기고 만든 "시험지 자체를 외우는" 문제나 사진 없이는 뭘 가리키는지 모르는 문제를 걸러낸다.
+  const BAD_QUESTION = [
+    /\d+\s*번\s*(문항|문제)/,                       // "15번 문항", "17번 문제"
+    /학년도|모의\s*평가|모평|학력\s*평가|학평|수능|기출/, // 시험 이름·연도
+    /(위|아래|제시된|주어진|앞의)\s*(자료|그래프|그림|도표|표|지도|사료|글)/,
+    /그래프에\s*(포함|나타|제시|표시)/,
+    /\((가|나|다|라|마)\)|[㉠㉡㉢㉣㉤]/,              // (가), ㉠ 같은 기호
+    /[A-E]\s*(국|국가|지역|시기|도시)(?![가-힣])/,       // "A국", "B 지역"
+  ];
+  function isBadQuestion(q) {
+    if (BAD_QUESTION.some((re) => re.test(q.question))) return true;
+    // "이집트와 일본"처럼 다른 보기 둘을 합친 보기가 있으면 정답이 겹친다.
+    return q.choices.some((c, i) => {
+      const parts = c.split(/\s*(?:와|과|,|및|그리고)\s+|\s*,\s*|(?<=[가-힣])(?:와|과)\s+/).map((x) => x.trim()).filter(Boolean);
+      return parts.length >= 2 && parts.every((part) => q.choices.some((o, j) => j !== i && o === part));
+    });
+  }
+
   function normalizeQuestions(raw) {
     const list = Array.isArray(raw?.questions) ? raw.questions : [];
     return list.map((q) => {
@@ -683,7 +723,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 4) return null;
       if (new Set(choices).size !== 5) return null;
       return { question, choices, correctIndex, explanation: explanation || '학습지 내용', figure: q.figure === true };
-    }).filter(Boolean);
+    }).filter((q) => q && !isBadQuestion(q));
   }
 
   async function explainHttp(res, m = model()) {

@@ -333,3 +333,9 @@ body.in-test main { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px
 .viewer-body { flex: 1; overflow: auto; padding: 0 8px calc(env(safe-area-inset-bottom, 0px) + 12px); }
 .viewer-body img { display: block; width: 100%; height: auto; margin: 0 auto; border-radius: 6px; }
 .viewer-body.zoom img { width: 220%; max-width: none; }
+
+.clean-box {
+  margin-block-start: 14px; padding: 12px 14px; border-radius: 12px; font-size: .9rem;
+  background: var(--accent-soft); display: grid; gap: 10px; justify-items: start;
+}
+.clean-box .btn { min-height: 40px; }
