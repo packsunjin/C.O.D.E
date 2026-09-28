@@ -485,16 +485,21 @@
     const hasKey = !!apiKey();
     $('btn-generate').disabled = !hasKey || photos.length === 0 || busy;
     $('make-hint').textContent = hasKey
-      ? `${model()} 모델로 만들어요. 30문제 기준 보통 30초~1분 걸려요.`
+      ? `${model()} 모델로 사진을 한 장씩 읽어 만들어요. 한 장에 10~30초 정도 걸려요.`
       : '먼저 설정 탭에서 Gemini API 키를 저장해 주세요.';
   }
 
   $('btn-go-make').onclick = () => { updateMakeReady(); go('make'); };
-  $('in-count').oninput = (e) => { $('count-out').textContent = e.target.value; };
+  function updateCountLabel() {
+    const per = Number($('in-count').value);
+    $('count-out').textContent = photos.length > 1 ? `${per}개 × ${photos.length}장 = 약 ${per * photos.length}문제` : `${per}개`;
+  }
+  $('in-count').oninput = updateCountLabel;
   $('in-photo').onchange = (e) => {
-    photos = [...e.target.files].slice(0, 10);
+    photos = [...e.target.files].slice(0, 12);
     $('thumbs').innerHTML = photos.map((f) => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
     $('gen-error').hidden = true;
+    updateCountLabel();
     updateMakeReady();
   };
 
@@ -519,12 +524,12 @@
     }
   }
 
-  function buildPrompt(count, subject, title) {
+  function buildPrompt(count, subject, title, page, pages) {
     return `너는 학생이 찍어 보낸 학습지 사진을 보고 5지선다 문제를 만드는 출제자다. 학생은 이 문제로 혼자 시험을 본다.
 
 사진을 직접 보고 읽어라. 인쇄된 글자뿐 아니라 빈칸에 손글씨로 채운 답과 필기도 학습지 내용이다.
-사진이 옆으로 돌아가 있거나 여러 장이면 모두 읽어라.
-
+사진이 옆으로 돌아가 있어도 돌려서 읽어라.
+${pages > 1 ? `이 사진은 학습지 ${pages}장 중 ${page}번째 장이다. 이 장에 있는 내용으로만 문제를 만든다.\n` : ''}
 반드시 지킬 것:
 - 학습지에 있는 내용만 쓴다. 학습지에 없는 사실·숫자·정의·표현을 지어내 문제나 정답에 넣지 않는다.
 - 오답 보기 4개도 가능한 한 학습지에 나온 다른 용어·인물·사건·연도에서 가져온다. 학습지에 없는 낯선 이름을 오답으로 쓰지 않는다.
@@ -534,11 +539,12 @@
 - 보기 5개는 같은 종류(모두 인물, 모두 지역, 모두 완결된 문장 등)로 맞추고, 각 보기는 그것만 읽어도 뜻이 통하는 완결된 말이어야 한다. 학습지 문장을 중간에서 자른 조각을 보기로 쓰지 않는다.
 - 정답이 아닌 보기 4개는 학습지 기준으로 분명히 틀려야 한다. 뜻이 같은 보기 두 개(예: "한성"과 "국내")를 함께 넣지 않는다.
 - 같은 내용을 문구만 바꿔 두 번 묻지 않는다.
-- 문항 수를 채우려고 억지로 만들지 않는다. 내용이 적으면 요청보다 적게 낸다.
+- 요청한 문항 수를 채운다. 이 장의 모든 항목(번호·소제목)을 빠짐없이 골고루 다루고, 한 항목에서 서로 다른 사실을 묻는 문제를 여러 개 내도 된다.
+- 이 장에 문제로 낼 내용이 정말 부족할 때만 요청보다 적게 낸다. 그때도 없는 내용을 지어내지는 않는다.
 - 정답은 보기 5개 중 정확히 하나다. 정답 위치를 골고루 섞는다.
 - explanation에는 학습지의 어느 항목(번호나 소제목)이 근거인지 한 문장으로 쓴다.
 
-요청 문항 수: 최대 ${count}개
+요청 문항 수: ${count}개
 ${subject ? `과목: ${subject}` : '과목: 학습지를 보고 판단'}
 ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 제목을 그대로 쓴다'}
 
@@ -585,17 +591,26 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
   const FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
   const LITE = /lite/;
 
-  async function callWithFallback(prompt, images, onModel) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // 같은 모델로 한 번 더 기다렸다 시도하고, 그래도 안 되면 다음 모델로 넘어간다.
+  // accept(text)는 응답을 문제 목록으로 바꾸고, 쓸 만한 문제가 없으면 예외를 던진다(그때도 다음 모델로).
+  async function callWithFallback(prompt, images, onModel, accept) {
     const chosen = model();
     const order = [chosen, ...FALLBACK_MODELS.filter((m) => m !== chosen)];
     let lastErr = null;
     for (const m of order) {
-      onModel(m);
-      try {
-        return { text: await callGemini(m, prompt, images), usedModel: m };
-      } catch (e) {
-        lastErr = e;
-        if (!e.retryable) throw e;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        onModel(m, attempt);
+        try {
+          const text = await callGemini(m, prompt, images);
+          return { value: accept(text), usedModel: m };
+        } catch (e) {
+          lastErr = e;
+          if (e.retryable === false && e.status) throw e;
+          if (e.status === 503 || e.status === 500) { await wait(3000 + attempt * 3000); continue; }
+          break;
+        }
       }
     }
     throw new Error(lastErr?.status === 429
@@ -621,7 +636,7 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
           role: 'user',
           parts: [{ text: prompt }, ...images.map((data) => ({ inline_data: { mime_type: 'image/jpeg', data } }))],
         }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.4 },
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 16384 },
       }),
     });
     if (res.ok) {
@@ -666,19 +681,75 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       say('사진 준비 중…');
       const images = [];
       for (const f of photos) images.push(await toBase64Jpeg(f));
-      const count = Number($('in-count').value) || 30;
+      const perPage = Number($('in-count').value) || 10;
       const subject = $('in-subject').value.trim();
       const title = $('in-title').value.trim();
 
-      const { text, usedModel } = await callWithFallback(buildPrompt(count, subject, title), images, (m) => {
-        say(m === model()
-          ? `AI가 사진 ${images.length}장을 읽고 문제를 만드는 중…`
-          : `사람이 몰려 다른 모델(${m})로 다시 시도하는 중…`);
-      });
-      let raw;
-      try { raw = parseJsonText(text); } catch { throw new Error('AI 응답을 읽지 못했어요. 문항 수를 줄여서 다시 시도해 주세요.'); }
-      const questions = normalizeQuestions(raw);
-      if (!questions.length) throw new Error('문제를 만들지 못했어요. 더 밝고 또렷한 사진으로 다시 시도해 주세요.');
+      // 사진을 한꺼번에 보내면 AI가 문제를 적게 만든다. 한 장씩 따로 만들어 합친다(동시에 2장씩).
+      const results = new Array(images.length).fill(null);
+      const usedModels = new Set();
+      let lastError = null;
+      let done = 0;
+      const progress = (extra) => {
+        const made = results.reduce((n, r) => n + (r?.questions.length || 0), 0);
+        say(`사진 ${images.length}장 중 ${done}장 완료 · 지금까지 ${made}문제${extra ? ` · ${extra}` : ''}`);
+      };
+      progress();
+      let next = 0;
+      const worker = async () => {
+        while (next < images.length) {
+          const i = next++;
+          await makePage(i);
+          done++;
+          progress();
+        }
+      };
+      const makePage = async (i) => {
+        try {
+          const { value, usedModel } = await callWithFallback(
+            buildPrompt(perPage, subject, title, i + 1, images.length), [images[i]],
+            (m, attempt) => { if (m !== model() || attempt) progress(`서버가 붐벼서 다시 시도 중 (${m})`); },
+            (text) => {
+              const raw = parseJsonText(text);
+              const questions = normalizeQuestions(raw);
+              if (!questions.length) throw new Error('parse');
+              return { raw, questions };
+            },
+          );
+          results[i] = value;
+          usedModels.add(usedModel);
+        } catch (e) {
+          lastError = e;
+        }
+      };
+      await Promise.all([worker(), worker()]);
+
+      // 실패한 장은 잠깐 쉬었다가 한 번 더.
+      const retry = results.map((r, i) => (r ? -1 : i)).filter((i) => i >= 0);
+      if (retry.length) {
+        progress(`실패한 ${retry.length}장 다시 시도 중`);
+        await wait(5000);
+        for (const i of retry) await makePage(i);
+      }
+
+      const seen = new Set();
+      const questions = [];
+      for (const r of results) {
+        for (const q of r?.questions || []) {
+          const k = q.question.replace(/\s+/g, '');
+          if (seen.has(k)) continue;
+          seen.add(k);
+          questions.push(q);
+        }
+      }
+      const failed = results.filter((r) => !r?.questions.length).length;
+      if (!questions.length) {
+        throw new Error(lastError && !(lastError instanceof SyntaxError) && lastError.message !== 'parse'
+          ? lastError.message
+          : '문제를 만들지 못했어요. 더 밝고 또렷한 사진으로 다시 시도해 주세요.');
+      }
+      const raw = results.find((r) => r?.raw)?.raw || {};
+      const usedModel = [...usedModels].find((m) => LITE.test(m)) || [...usedModels][0] || '';
 
       const set = {
         id: `u${Date.now().toString(36)}`,
@@ -694,9 +765,10 @@ ${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 
       $('in-photo').value = '';
       $('thumbs').innerHTML = '';
       $('in-title').value = '';
-      toast(LITE.test(usedModel)
-        ? `${questions.length}문제를 만들었어요 · 가벼운 모델이라 문제를 꼭 확인하세요`
-        : `${questions.length}문제를 만들었어요`);
+      const notes = [];
+      if (failed) notes.push(`${failed}장은 실패`);
+      if (LITE.test(usedModel)) notes.push('일부는 가벼운 모델이라 꼭 확인하세요');
+      toast(`${questions.length}문제를 만들었어요${notes.length ? ' · ' + notes.join(' · ') : ''}`);
       openDetail(set.id);
     } catch (e) {
       err.hidden = false;
