@@ -495,8 +495,13 @@
     $('count-out').textContent = photos.length > 1 ? `${per}개 × ${photos.length}장 = 약 ${per * photos.length}문제` : `${per}개`;
   }
   $('in-count').oninput = updateCountLabel;
+  // 사진은 한 장씩 따로 보내므로 장수가 많아도 되지만, 무료 사용량을 생각해 넉넉한 상한만 둔다.
+  const MAX_PHOTOS = 30;
   $('in-photo').onchange = (e) => {
-    photos = [...e.target.files].slice(0, 12);
+    const picked = [...e.target.files];
+    photos = picked.slice(0, MAX_PHOTOS);
+    if (picked.length > MAX_PHOTOS) toast(`한 번에 ${MAX_PHOTOS}장까지 돼요. 앞의 ${MAX_PHOTOS}장만 골랐어요.`);
+    else if (picked.length) toast(`사진 ${picked.length}장을 골랐어요`);
     $('thumbs').innerHTML = photos.map((f) => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
     $('gen-error').hidden = true;
     updateCountLabel();
