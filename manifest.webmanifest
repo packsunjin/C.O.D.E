@@ -1,0 +1,15 @@
+{
+  "name": "쪽지시험",
+  "short_name": "쪽지시험",
+  "description": "학습지 사진으로 5지선다 문제를 만들어 푸는 앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f4f1",
+  "theme_color": "#2f5d50",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

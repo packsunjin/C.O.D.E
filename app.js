@@ -1,0 +1,612 @@
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const CIRCLED = ['①', '②', '③', '④', '⑤'];
+  const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+  const DEFAULT_MODEL = 'gemini-3.8-flash';
+
+  // ── 저장소 (이 기기 브라우저에만) ───────────────────
+  const KEYS = {
+    apiKey: 'jjok:apiKey',
+    model: 'jjok:model',
+    sets: 'jjok:sets',
+    wrong: 'jjok:wrong',
+    best: 'jjok:best',
+    shuffle: 'jjok:shuffle',
+  };
+  function read(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw == null ? fallback : JSON.parse(raw);
+    } catch { return fallback; }
+  }
+  function write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+  }
+
+  const store = {
+    userSets: read(KEYS.sets, []),
+    wrong: read(KEYS.wrong, {}),
+    best: read(KEYS.best, {}),
+  };
+  const saveSets = () => write(KEYS.sets, store.userSets);
+  const saveWrong = () => write(KEYS.wrong, store.wrong);
+  const saveBest = () => write(KEYS.best, store.best);
+
+  function allSets() {
+    const builtin = (window.BUILTIN_SETS || []).map((s) => ({ ...s, builtin: true }));
+    return [...store.userSets, ...builtin];
+  }
+  function findSet(id) {
+    if (id === 'all') return combinedSet();
+    return allSets().find((s) => s.id === id);
+  }
+  function combinedSet() {
+    const sets = allSets();
+    return {
+      id: 'all', subject: '전체', title: '모든 학습지 합쳐서', combined: true,
+      questions: sets.flatMap((s) => s.questions.map((q, i) => withMeta(q, s, i))),
+    };
+  }
+  function withMeta(q, set, index) {
+    return { ...q, qid: q.qid || `${set.id}#${index}`, from: q.from || set.title };
+  }
+
+  // ── 공통 UI ────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function shuffled(list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+  }
+
+  // ── 화면 이동 ───────────────────────────────────────
+  const TAB_OF = { sets: 'sets', make: 'sets', detail: 'sets', test: 'sets', result: 'sets', wrong: 'wrong', settings: 'settings' };
+  const TITLES = { sets: '쪽지시험', make: '문제 만들기', wrong: '오답노트', settings: '설정' };
+  const BACK = { make: 'sets', detail: 'sets', test: 'detail', result: 'detail' };
+  let current = 'sets';
+
+  function go(view, title) {
+    current = view;
+    for (const el of document.querySelectorAll('.view')) el.hidden = el.id !== `view-${view}`;
+    $('appbar-title').textContent = title || TITLES[view] || '쪽지시험';
+    $('appbar-extra').textContent = '';
+    $('btn-back').hidden = !BACK[view];
+    document.body.classList.toggle('in-test', view === 'test');
+    for (const t of document.querySelectorAll('.tab')) t.classList.toggle('on', t.dataset.tab === TAB_OF[view]);
+    window.scrollTo(0, 0);
+  }
+
+  $('btn-back').onclick = () => {
+    const to = BACK[current];
+    if (to === 'detail' && state.set && !state.set.review) openDetail(state.set.id);
+    else if (to === 'detail' && state.set?.review) { renderWrong(); go('wrong'); }
+    else { renderSets(); go(to); }
+  };
+  for (const t of document.querySelectorAll('.tab')) {
+    t.onclick = () => {
+      const tab = t.dataset.tab;
+      if (tab === 'sets') { renderSets(); go('sets'); }
+      if (tab === 'wrong') { renderWrong(); go('wrong'); }
+      if (tab === 'settings') { renderSettings(); go('settings'); }
+    };
+  }
+
+  // ── 학습지 목록 ─────────────────────────────────────
+  function renderSets() {
+    const sets = allSets();
+    const entries = sets.length > 1 ? [...sets, combinedSet()] : sets;
+    $('sets-count').textContent = `${sets.length}개`;
+    const list = $('set-list');
+    list.innerHTML = '';
+    for (const s of entries) {
+      const b = document.createElement('button');
+      b.className = `set-item${s.combined ? ' combined' : ''}`;
+      const best = store.best[s.id];
+      const meta = [`${s.questions.length}문제`];
+      if (best != null) meta.push(`최고 ${best}%`);
+      if (!s.builtin && !s.combined) meta.push('사진으로 만듦');
+      b.innerHTML = `
+        <span class="subj">${esc(s.subject || '학습지')}</span>
+        <span class="name">${esc(s.title)}</span>
+        <span class="meta best">${esc(meta.join(' · '))}</span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
+      b.onclick = () => openDetail(s.id);
+      list.append(b);
+    }
+    $('wrong-dot').hidden = Object.keys(store.wrong).length === 0;
+  }
+
+  $('opt-shuffle').checked = read(KEYS.shuffle, true) !== false;
+  $('opt-shuffle').onchange = (e) => write(KEYS.shuffle, e.target.checked);
+
+  // ── 학습지 상세 ─────────────────────────────────────
+  function openDetail(id) {
+    const s = findSet(id);
+    if (!s) { renderSets(); go('sets'); return; }
+    state.set = s;
+    $('detail-subject').textContent = s.subject || '학습지';
+    $('detail-title').textContent = s.title;
+    const best = store.best[s.id];
+    $('detail-meta').textContent = `${s.questions.length}문제` + (best != null ? ` · 최고 점수 ${best}%` : '');
+    $('detail-list').hidden = true;
+    $('btn-toggle-answers').textContent = '정답 보기';
+    $('btn-delete-set').hidden = !!(s.builtin || s.combined);
+    $('delete-confirm').hidden = true;
+    go('detail', s.subject || '학습지');
+  }
+
+  $('btn-toggle-answers').onclick = () => {
+    const box = $('detail-list');
+    if (!box.hidden) { box.hidden = true; $('btn-toggle-answers').textContent = '정답 보기'; return; }
+    box.innerHTML = state.set.questions.map((q, i) => `
+      <div class="qitem">
+        <p class="q">${i + 1}. ${esc(q.question)}</p>
+        <ol>${q.choices.map((c, j) => `<li class="${j === q.correctIndex ? 'correct' : ''}">${CIRCLED[j]} ${esc(c)}</li>`).join('')}</ol>
+        <p class="why">${esc(q.explanation)}</p>
+      </div>`).join('');
+    box.hidden = false;
+    $('btn-toggle-answers').textContent = '정답 숨기기';
+  };
+  $('btn-start').onclick = () => startRound(state.set, state.set.questions);
+  $('btn-delete-set').onclick = () => { $('delete-confirm').hidden = false; };
+  $('btn-delete-no').onclick = () => { $('delete-confirm').hidden = true; };
+  $('btn-delete-yes').onclick = () => {
+    const id = state.set.id;
+    store.userSets = store.userSets.filter((s) => s.id !== id);
+    for (const k of Object.keys(store.wrong)) if (k.startsWith(`${id}#`)) delete store.wrong[k];
+    delete store.best[id];
+    saveSets(); saveWrong(); saveBest();
+    toast('학습지를 삭제했어요');
+    renderSets();
+    go('sets');
+  };
+
+  // ── 시험 ───────────────────────────────────────────
+  const state = { set: null, source: [], round: [], answers: [], no: 0 };
+
+  // 보기 순서도 매번 섞어서 정답 위치를 외우지 않게 한다.
+  function shuffleChoices(q) {
+    const order = shuffled([0, 1, 2, 3, 4]);
+    return { ...q, choices: order.map((k) => q.choices[k]), correctIndex: order.indexOf(q.correctIndex) };
+  }
+
+  function startRound(set, questions) {
+    state.set = set;
+    state.source = questions;
+    const prepared = questions.map((q, i) => (q.qid ? q : withMeta(q, set, i)));
+    const ordered = $('opt-shuffle').checked ? shuffled(prepared) : prepared;
+    state.round = ordered.map(shuffleChoices);
+    state.answers = new Array(state.round.length).fill(-1);
+    state.no = 0;
+    renderQuestion();
+    go('test', set.review ? '오답 다시 풀기' : set.title);
+  }
+
+  function counts() {
+    const answered = state.answers.filter((a) => a !== -1).length;
+    const right = state.answers.filter((a, i) => a === state.round[i].correctIndex).length;
+    return { answered, right };
+  }
+
+  function renderQuestion() {
+    const q = state.round[state.no];
+    const chosen = state.answers[state.no];
+    const done = chosen !== -1;
+    const { answered, right } = counts();
+    const total = state.round.length;
+
+    $('progress-bar').style.width = `${(answered / total) * 100}%`;
+    $('test-no').textContent = `${state.no + 1} / ${total}`;
+    $('test-score').textContent = answered ? `맞음 ${right} · 틀림 ${answered - right}` : '';
+    $('test-question').textContent = q.question;
+
+    const box = $('test-choices');
+    box.innerHTML = '';
+    q.choices.forEach((c, i) => {
+      const b = document.createElement('button');
+      let cls = 'choice';
+      if (done) cls += i === q.correctIndex ? ' right' : i === chosen ? ' wrong' : ' dim';
+      b.className = cls;
+      b.disabled = done;
+      b.innerHTML = `<span class="n">${CIRCLED[i]}</span><span>${esc(c)}</span>`;
+      b.onclick = () => answer(i);
+      box.append(b);
+    });
+
+    const fb = $('feedback');
+    fb.hidden = !done;
+    if (done) {
+      const ok = chosen === q.correctIndex;
+      fb.className = `feedback ${ok ? 'ok' : 'no'}`;
+      $('feedback-verdict').textContent = ok ? '정답이에요' : `틀렸어요 · 정답은 ${CIRCLED[q.correctIndex]}`;
+      $('feedback-why').textContent = q.explanation;
+    }
+
+    const last = state.no === total - 1;
+    $('btn-prev').disabled = state.no === 0;
+    $('btn-next').textContent = last ? '채점 결과 보기' : done ? '다음 문제' : '건너뛰기';
+    $('btn-finish').hidden = last || answered === 0;
+  }
+
+  function answer(i) {
+    if (state.answers[state.no] !== -1) return;
+    state.answers[state.no] = i;
+    const q = state.round[state.no];
+    if (i === q.correctIndex) {
+      // 오답노트에서 다시 맞히면 노트에서 뺀다.
+      if (state.set.review && store.wrong[q.qid]) { delete store.wrong[q.qid]; saveWrong(); }
+    } else {
+      const prev = store.wrong[q.qid];
+      store.wrong[q.qid] = {
+        qid: q.qid, from: q.from || state.set.title,
+        question: q.question, choices: q.choices, correctIndex: q.correctIndex, explanation: q.explanation,
+        misses: (prev?.misses || 0) + 1, at: Date.now(),
+      };
+      saveWrong();
+    }
+    renderQuestion();
+  }
+
+  $('btn-prev').onclick = () => { if (state.no > 0) { state.no--; renderQuestion(); } };
+  $('btn-next').onclick = () => {
+    if (state.no < state.round.length - 1) { state.no++; renderQuestion(); window.scrollTo(0, 0); }
+    else finish();
+  };
+  $('btn-finish').onclick = finish;
+
+  // ── 결과 ───────────────────────────────────────────
+  let lastWrong = [];
+  function finish() {
+    const total = state.round.length;
+    const { answered, right } = counts();
+    const pct = Math.round((right / total) * 100);
+    $('score-ring').style.setProperty('--p', pct);
+    $('score-pct').textContent = `${pct}%`;
+    $('score-num').textContent = `${total}문제 중 ${right}개 맞음`;
+    $('score-note').textContent = answered < total ? `${total - answered}문제는 풀지 않았어요` : '';
+
+    if (!state.set.review && state.source === state.set.questions && answered === total) {
+      if (store.best[state.set.id] == null || pct > store.best[state.set.id]) {
+        store.best[state.set.id] = pct;
+        saveBest();
+      }
+    }
+
+    lastWrong = state.round.filter((q, i) => state.answers[i] !== q.correctIndex);
+    $('btn-retry-wrong').hidden = lastWrong.length === 0;
+    $('result-wrong').innerHTML = lastWrong.length
+      ? `<h2 class="card-title">틀리거나 안 푼 문제 ${lastWrong.length}개</h2>` + lastWrong.map((q) => {
+          const i = state.round.indexOf(q);
+          const mine = state.answers[i];
+          return `<div class="witem">
+            ${state.set.combined || state.set.review ? `<p class="from">${esc(q.from)}</p>` : ''}
+            <p class="q">${esc(q.question)}</p>
+            <p class="line mine">내 답: ${mine === -1 ? '(안 풂)' : `${CIRCLED[mine]} ${esc(q.choices[mine])}`}</p>
+            <p class="line ans">정답: ${CIRCLED[q.correctIndex]} ${esc(q.choices[q.correctIndex])}</p>
+            <p class="why">${esc(q.explanation)}</p>
+          </div>`;
+        }).join('')
+      : '<p class="muted">전부 맞았어요!</p>';
+    go('result', '채점 결과');
+    renderSets();
+  }
+
+  $('btn-retry-wrong').onclick = () => startRound(state.set, lastWrong);
+  $('btn-retest').onclick = () => startRound(state.set, state.set.questions);
+
+  // ── 오답노트 ───────────────────────────────────────
+  function renderWrong() {
+    const items = Object.values(store.wrong).sort((a, b) => b.at - a.at);
+    $('wrong-dot').hidden = items.length === 0;
+    $('wrong-summary').innerHTML = items.length
+      ? `<h2 class="card-title">틀린 문제 ${items.length}개</h2>
+         <p class="muted small">오답노트로 다시 풀어서 맞히면 목록에서 빠져요.</p>
+         <div class="btn-row"><button class="btn primary grow" id="btn-review">오답만 시험 보기</button></div>`
+      : `<h2 class="card-title">오답노트가 비어 있어요</h2>
+         <p class="muted small">시험에서 틀린 문제가 여기에 자동으로 모여요.</p>`;
+    const btn = $('btn-review');
+    if (btn) btn.onclick = () => startRound({ id: 'review', title: '오답노트', review: true, questions: items }, items);
+
+    const list = $('wrong-list');
+    list.innerHTML = '';
+    for (const q of items) {
+      const card = document.createElement('div');
+      card.className = 'card witem';
+      card.innerHTML = `
+        <p class="from">${esc(q.from)}${q.misses > 1 ? ` · ${q.misses}번 틀림` : ''}</p>
+        <p class="q">${esc(q.question)}</p>
+        <p class="line ans">정답: ${esc(q.choices[q.correctIndex])}</p>
+        <p class="why">${esc(q.explanation)}</p>
+        <div class="btn-row"><button class="btn text small">노트에서 빼기</button></div>`;
+      card.querySelector('button').onclick = () => {
+        delete store.wrong[q.qid];
+        saveWrong();
+        renderWrong();
+      };
+      list.append(card);
+    }
+  }
+
+  // ── 설정 ───────────────────────────────────────────
+  function apiKey() { return read(KEYS.apiKey, ''); }
+  function model() { return read(KEYS.model, DEFAULT_MODEL); }
+
+  function renderSettings() {
+    $('in-key').value = apiKey();
+    $('in-model').value = model();
+    if (!$('in-model').value) $('in-model').value = DEFAULT_MODEL;
+    setStatus('key-status', apiKey() ? '키가 저장되어 있어요.' : '아직 키가 없어요.', apiKey() ? 'ok' : '');
+    setStatus('data-status', '', '');
+  }
+  function setStatus(id, text, kind) {
+    const el = $(id);
+    el.textContent = text;
+    el.className = `status-line small ${kind || ''}`;
+  }
+  $('btn-save-key').onclick = () => {
+    write(KEYS.apiKey, $('in-key').value.trim());
+    write(KEYS.model, $('in-model').value);
+    setStatus('key-status', '저장했어요.', 'ok');
+    updateMakeReady();
+  };
+  $('btn-test-key').onclick = async () => {
+    const key = $('in-key').value.trim();
+    if (!key) { setStatus('key-status', '키를 먼저 붙여넣어 주세요.', 'no'); return; }
+    setStatus('key-status', '확인 중…', '');
+    try {
+      const res = await fetch(`${API_BASE}/models?pageSize=1`, { headers: { 'x-goog-api-key': key } });
+      if (res.ok) setStatus('key-status', '연결됐어요. 저장을 눌러 주세요.', 'ok');
+      else setStatus('key-status', await explainHttp(res), 'no');
+    } catch {
+      setStatus('key-status', '구글 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.', 'no');
+    }
+  };
+
+  $('btn-export').onclick = () => {
+    const data = JSON.stringify({ app: 'jjok', version: 1, sets: store.userSets, wrong: store.wrong, best: store.best }, null, 1);
+    const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `쪽지시험-백업-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStatus('data-status', '백업 파일을 내려받았어요.', 'ok');
+  };
+  $('in-import').onchange = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (data.app !== 'jjok' || !Array.isArray(data.sets)) throw new Error();
+      const have = new Set(store.userSets.map((s) => s.id));
+      const added = data.sets.filter((s) => !have.has(s.id));
+      store.userSets = [...added, ...store.userSets];
+      store.wrong = { ...(data.wrong || {}), ...store.wrong };
+      store.best = { ...(data.best || {}), ...store.best };
+      saveSets(); saveWrong(); saveBest();
+      setStatus('data-status', `학습지 ${added.length}개를 가져왔어요.`, 'ok');
+    } catch {
+      setStatus('data-status', '쪽지시험 백업 파일이 아니에요.', 'no');
+    }
+  };
+
+  // ── 문제 만들기 (Gemini) ────────────────────────────
+  let photos = [];
+
+  function updateMakeReady() {
+    const hasKey = !!apiKey();
+    $('btn-generate').disabled = !hasKey || photos.length === 0 || busy;
+    $('make-hint').textContent = hasKey
+      ? `${model()} 모델로 만들어요. 30문제 기준 보통 30초~1분 걸려요.`
+      : '먼저 설정 탭에서 Gemini API 키를 저장해 주세요.';
+  }
+
+  $('btn-go-make').onclick = () => { updateMakeReady(); go('make'); };
+  $('in-count').oninput = (e) => { $('count-out').textContent = e.target.value; };
+  $('in-photo').onchange = (e) => {
+    photos = [...e.target.files].slice(0, 10);
+    $('thumbs').innerHTML = photos.map((f) => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
+    $('gen-error').hidden = true;
+    updateMakeReady();
+  };
+
+  // 사진이 크면 요청이 무거워지므로 긴 변 1600px JPEG로 줄인다.
+  async function toBase64Jpeg(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = url;
+      });
+      const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function buildPrompt(count, subject, title) {
+    return `너는 학생이 찍어 보낸 학습지 사진을 보고 5지선다 문제를 만드는 출제자다. 학생은 이 문제로 혼자 시험을 본다.
+
+사진을 직접 보고 읽어라. 인쇄된 글자뿐 아니라 빈칸에 손글씨로 채운 답과 필기도 학습지 내용이다.
+사진이 옆으로 돌아가 있거나 여러 장이면 모두 읽어라.
+
+반드시 지킬 것:
+- 학습지에 있는 내용만 쓴다. 학습지에 없는 사실·숫자·정의·표현을 지어내 문제나 정답에 넣지 않는다.
+- 오답 보기 4개도 가능한 한 학습지에 나온 다른 용어·인물·사건·연도에서 가져온다. 학습지에 없는 낯선 이름을 오답으로 쓰지 않는다.
+- 알아보기 어려운 글씨나 비어 있는 빈칸은 문제로 쓰지 않는다.
+- 같은 내용을 문구만 바꿔 두 번 묻지 않는다.
+- 문항 수를 채우려고 억지로 만들지 않는다. 내용이 적으면 요청보다 적게 낸다.
+- 정답은 보기 5개 중 정확히 하나다. 정답 위치를 골고루 섞는다.
+- explanation에는 학습지의 어느 항목(번호나 소제목)이 근거인지 한 문장으로 쓴다.
+
+요청 문항 수: 최대 ${count}개
+${subject ? `과목: ${subject}` : '과목: 학습지를 보고 판단'}
+${title ? `학습지 제목: ${title}` : '학습지 제목: 학습지에 적힌 제목을 그대로 쓴다'}
+
+아래 JSON 하나만 출력한다. 다른 말은 쓰지 않는다.
+{"subject":"과목","title":"학습지 제목","questions":[{"question":"문제","choices":["보기1","보기2","보기3","보기4","보기5"],"correctIndex":0,"explanation":"근거"}]}`;
+  }
+
+  function parseJsonText(text) {
+    const t = String(text || '').replace(/```(?:json)?/g, '').trim();
+    try { return JSON.parse(t); } catch {}
+    const start = t.indexOf('{');
+    const end = t.lastIndexOf('}');
+    if (start !== -1 && end > start) return JSON.parse(t.slice(start, end + 1));
+    throw new Error('parse');
+  }
+
+  function normalizeQuestions(raw) {
+    const list = Array.isArray(raw?.questions) ? raw.questions : [];
+    return list.map((q) => {
+      if (!q || typeof q !== 'object') return null;
+      const question = String(q.question ?? '').trim();
+      const explanation = String(q.explanation ?? '').trim();
+      const choices = Array.isArray(q.choices) ? q.choices.map((c) => String(c ?? '').trim()) : [];
+      const correctIndex = Number(q.correctIndex);
+      if (!question || choices.length !== 5 || choices.some((c) => !c)) return null;
+      if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 4) return null;
+      if (new Set(choices).size !== 5) return null;
+      return { question, choices, correctIndex, explanation: explanation || '학습지 내용' };
+    }).filter(Boolean);
+  }
+
+  async function explainHttp(res) {
+    let msg = '';
+    try { msg = (await res.json())?.error?.message || ''; } catch {}
+    if (res.status === 400 && /api key/i.test(msg)) return 'API 키가 올바르지 않아요. 설정에서 다시 확인해 주세요.';
+    if (res.status === 401 || res.status === 403) return 'API 키가 거부됐어요. 키를 새로 만들어 설정에 저장해 주세요.';
+    if (res.status === 404) return `모델을 찾지 못했어요(${model()}). 설정에서 다른 모델을 골라 주세요.`;
+    if (res.status === 429) return '무료 사용량을 잠시 넘었어요. 1~2분 뒤에 다시 시도해 주세요.';
+    if (res.status >= 500) return '구글 서버가 잠시 응답하지 않아요. 조금 뒤 다시 시도해 주세요.';
+    return `요청이 실패했어요 (${res.status}) ${msg}`.trim();
+  }
+
+  // generateContent가 기본. 이 모델이 그 방식을 안 받으면(404) 새 Interactions 방식으로 한 번 더 시도한다.
+  async function callGemini(prompt, images, signal) {
+    const key = apiKey();
+    const m = model();
+    const headers = { 'Content-Type': 'application/json', 'x-goog-api-key': key };
+
+    const res = await fetch(`${API_BASE}/models/${encodeURIComponent(m)}:generateContent`, {
+      method: 'POST', headers, signal,
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }, ...images.map((data) => ({ inline_data: { mime_type: 'image/jpeg', data } }))],
+        }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.4 },
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const text = parts.map((p) => p.text || '').join('');
+      if (!text) {
+        const reason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
+        throw new Error(reason ? `AI가 답을 주지 않았어요 (${reason}). 다른 사진으로 시도해 주세요.` : 'AI 응답이 비어 있어요. 다시 시도해 주세요.');
+      }
+      return text;
+    }
+    if (res.status !== 404) throw new Error(await explainHttp(res));
+
+    const res2 = await fetch(`${API_BASE}/interactions`, {
+      method: 'POST', headers, signal,
+      body: JSON.stringify({
+        model: m,
+        input: [{ type: 'text', text: prompt }, ...images.map((data) => ({ type: 'image', data, mime_type: 'image/jpeg' }))],
+        response_format: { type: 'text', mime_type: 'application/json' },
+      }),
+    });
+    if (!res2.ok) throw new Error(await explainHttp(res2));
+    const d = await res2.json();
+    const text = d?.interaction?.output_text ?? d?.output_text
+      ?? (d?.outputs || d?.interaction?.outputs || []).map((o) => o.text || '').join('');
+    if (!text) throw new Error('AI 응답이 비어 있어요. 다시 시도해 주세요.');
+    return text;
+  }
+
+  let busy = false;
+  $('btn-generate').onclick = async () => {
+    if (busy || !photos.length) return;
+    busy = true;
+    updateMakeReady();
+    const err = $('gen-error');
+    err.hidden = true;
+    $('gen-status').hidden = false;
+    const say = (t) => { $('gen-status-text').textContent = t; };
+
+    try {
+      say('사진 준비 중…');
+      const images = [];
+      for (const f of photos) images.push(await toBase64Jpeg(f));
+      const count = Number($('in-count').value) || 30;
+      const subject = $('in-subject').value.trim();
+      const title = $('in-title').value.trim();
+
+      say(`AI가 사진 ${images.length}장을 읽고 문제를 만드는 중…`);
+      const text = await callGemini(buildPrompt(count, subject, title), images);
+      let raw;
+      try { raw = parseJsonText(text); } catch { throw new Error('AI 응답을 읽지 못했어요. 문항 수를 줄여서 다시 시도해 주세요.'); }
+      const questions = normalizeQuestions(raw);
+      if (!questions.length) throw new Error('문제를 만들지 못했어요. 더 밝고 또렷한 사진으로 다시 시도해 주세요.');
+
+      const set = {
+        id: `u${Date.now().toString(36)}`,
+        subject: subject || String(raw.subject || '').trim() || '학습지',
+        title: title || String(raw.title || '').trim() || `학습지 ${new Date().toLocaleDateString('ko-KR')}`,
+        createdAt: Date.now(),
+        questions,
+      };
+      store.userSets = [set, ...store.userSets];
+      if (!saveSets()) throw new Error('저장 공간이 부족해 학습지를 저장하지 못했어요.');
+
+      photos = [];
+      $('in-photo').value = '';
+      $('thumbs').innerHTML = '';
+      $('in-title').value = '';
+      toast(`${questions.length}문제를 만들었어요`);
+      openDetail(set.id);
+    } catch (e) {
+      err.hidden = false;
+      err.textContent = e?.name === 'TypeError'
+        ? '구글 서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'
+        : (e?.message || '문제를 만들지 못했어요.');
+    } finally {
+      busy = false;
+      $('gen-status').hidden = true;
+      updateMakeReady();
+    }
+  };
+
+  // ── 시작 ───────────────────────────────────────────
+  renderSets();
+  go('sets');
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
