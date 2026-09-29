@@ -1,9 +1,9 @@
 // 기본으로 들어 있는 학습지 문제. 사진으로 만든 학습지는 브라우저(localStorage)에 따로 저장된다.
 window.BUILTIN_SETS = [
   {
-    "id": "algebra-exp-log",
+    "id": "algebra-exponent",
     "subject": "대수",
-    "title": "I. 지수함수와 로그함수 공식",
+    "title": "I. 거듭제곱근과 지수 공식",
     "questions": [
       {
         "question": "$n$이 홀수일 때, 실수 $a$의 $n$제곱근 중 실수인 것의 개수는?",
@@ -150,280 +150,88 @@ window.BUILTIN_SETS = [
         "explanation": "$8^{\\frac23}=(2^3)^{\\frac23}=2^2=4$"
       },
       {
-        "question": "$a^x=N$일 때 $x$를 로그로 나타낸 것은? (단, $a>0,\\ a\\ne1,\\ N>0$)",
+        "question": "$\\sqrt[3]{-8}$의 값은?",
         "choices": [
-          "$x=\\log_a N$",
-          "$x=\\log_N a$",
-          "$N=\\log_a x$",
-          "$a=\\log_x N$",
-          "$x=\\log a^N$"
+          "$-2$",
+          "$2$",
+          "$\\pm2$",
+          "정의되지 않는다",
+          "$-\\dfrac{8}{3}$"
         ],
         "correctIndex": 0,
-        "explanation": "로그의 정의: $a^x=N \\iff x=\\log_a N$ ($a$는 밑, $N$은 진수)"
+        "explanation": "$n$이 홀수이면 음수의 $n$제곱근 중 실수가 하나 있다: $(-2)^3=-8$이므로 $\\sqrt[3]{-8}=-2$"
       },
       {
-        "question": "$\\log_a N$이 정의되기 위한 조건은?",
+        "question": "$16$의 네제곱근 중 실수인 것과 $\\sqrt[4]{16}$의 값을 차례로 쓴 것은?",
         "choices": [
-          "$a>0,\\ a\\ne1,\\ N>0$",
-          "$a>0,\\ N>0$",
-          "$a\\ne1,\\ N\\ne0$",
-          "$a>1,\\ N>1$",
-          "$a>0,\\ a\\ne1,\\ N\\ge0$"
+          "$\\pm2$, $2$",
+          "$2$, $\\pm2$",
+          "$\\pm2$, $\\pm2$",
+          "$2$, $2$",
+          "$\\pm4$, $4$"
         ],
         "correctIndex": 0,
-        "explanation": "밑 조건: $a>0,\\ a\\ne1$ / 진수 조건: $N>0$"
+        "explanation": "$16$의 네제곱근 중 실수는 $2,\\ -2$ 두 개이고, $\\sqrt[4]{16}$은 그중 양수인 $2$만 뜻한다."
       },
       {
-        "question": "$a>0,\\ a\\ne1$일 때 $\\log_a 1$과 $\\log_a a$의 값은?",
+        "question": "$a>0$일 때 $a^{\\frac12}\\times a^{\\frac32}$을 간단히 한 것은?",
         "choices": [
-          "$\\log_a1=0,\\ \\log_aa=1$",
-          "$\\log_a1=1,\\ \\log_aa=0$",
-          "$\\log_a1=1,\\ \\log_aa=1$",
-          "$\\log_a1=0,\\ \\log_aa=0$",
-          "$\\log_a1=a,\\ \\log_aa=1$"
-        ],
-        "correctIndex": 0,
-        "explanation": "$a^0=1$이므로 $\\log_a1=0$, $a^1=a$이므로 $\\log_aa=1$."
-      },
-      {
-        "question": "$M>0,\\ N>0$일 때 $\\log_a MN$과 같은 것은?",
-        "choices": [
-          "$\\log_aM+\\log_aN$",
-          "$\\log_aM\\times\\log_aN$",
-          "$\\log_aM-\\log_aN$",
-          "$\\log_a(M+N)$",
-          "$N\\log_aM$"
-        ],
-        "correctIndex": 0,
-        "explanation": "로그의 성질: $\\log_aMN=\\log_aM+\\log_aN$"
-      },
-      {
-        "question": "$M>0,\\ N>0$일 때 $\\log_a\\dfrac{M}{N}$과 같은 것은?",
-        "choices": [
-          "$\\log_aM-\\log_aN$",
-          "$\\dfrac{\\log_aM}{\\log_aN}$",
-          "$\\log_aM+\\log_aN$",
-          "$\\log_a(M-N)$",
-          "$\\log_NM$"
-        ],
-        "correctIndex": 0,
-        "explanation": "로그의 성질: $\\log_a\\dfrac MN=\\log_aM-\\log_aN$. $\\dfrac{\\log_aM}{\\log_aN}$은 $\\log_NM$이다(밑변환)."
-      },
-      {
-        "question": "$M>0$이고 $k$가 실수일 때 $\\log_aM^k$과 같은 것은?",
-        "choices": [
-          "$k\\log_aM$",
-          "$(\\log_aM)^k$",
-          "$\\log_a kM$",
-          "$\\dfrac{1}{k}\\log_aM$",
-          "$k+\\log_aM$"
-        ],
-        "correctIndex": 0,
-        "explanation": "로그의 성질: $\\log_aM^k=k\\log_aM$"
-      },
-      {
-        "question": "밑변환 공식으로 옳은 것은? (단, $c>0,\\ c\\ne1$)",
-        "choices": [
-          "$\\log_ab=\\dfrac{\\log_cb}{\\log_ca}$",
-          "$\\log_ab=\\dfrac{\\log_ca}{\\log_cb}$",
-          "$\\log_ab=\\log_cb-\\log_ca$",
-          "$\\log_ab=\\log_ca\\cdot\\log_cb$",
-          "$\\log_ab=\\dfrac{\\log_bc}{\\log_ac}$"
-        ],
-        "correctIndex": 0,
-        "explanation": "밑변환 공식: $\\log_ab=\\dfrac{\\log_cb}{\\log_ca}$ (분자에 진수, 분모에 밑)"
-      },
-      {
-        "question": "$\\log_ab$와 같은 것은? (단, $b>0,\\ b\\ne1$)",
-        "choices": [
-          "$\\dfrac{1}{\\log_ba}$",
-          "$-\\log_ba$",
-          "$\\log_ba$",
-          "$\\log_{\\frac1a}b$",
-          "$\\dfrac{1}{\\log_ab}$"
-        ],
-        "correctIndex": 0,
-        "explanation": "밑변환 공식에서 $c=b$로 두면 $\\log_ab=\\dfrac{\\log_bb}{\\log_ba}=\\dfrac1{\\log_ba}$"
-      },
-      {
-        "question": "$\\log_{a^m}b^n$과 같은 것은? (단, $m\\ne0$)",
-        "choices": [
-          "$\\dfrac{n}{m}\\log_ab$",
-          "$\\dfrac{m}{n}\\log_ab$",
-          "$mn\\log_ab$",
-          "$(n-m)\\log_ab$",
-          "$\\log_ab^{\\frac mn}$"
-        ],
-        "correctIndex": 0,
-        "explanation": "$\\log_{a^m}b^n=\\dfrac{n}{m}\\log_ab$ (진수의 지수는 분자로, 밑의 지수는 분모로)"
-      },
-      {
-        "question": "$a^{\\log_ab}$의 값은? (단, $a>0,\\ a\\ne1,\\ b>0$)",
-        "choices": [
-          "$b$",
+          "$a^2$",
+          "$a^{\\frac34}$",
+          "$a^3$",
           "$a$",
-          "$1$",
-          "$ab$",
-          "$\\log_ab$"
+          "$2a$"
         ],
         "correctIndex": 0,
-        "explanation": "$\\log_ab=x$라 하면 $a^x=b$이므로 $a^{\\log_ab}=b$"
+        "explanation": "$a^xa^y=a^{x+y}$: $\\dfrac12+\\dfrac32=2$"
       },
       {
-        "question": "$a^{\\log_cb}$와 같은 것은? (단, $a,b>0$, $c>0,\\ c\\ne1$)",
+        "question": "$a>0$일 때 $\\left(a^{\\frac23}\\right)^{\\frac32}$을 간단히 한 것은?",
         "choices": [
-          "$b^{\\log_ca}$",
-          "$c^{\\log_ab}$",
-          "$a^{\\log_bc}$",
-          "$b^{\\log_ac}$",
-          "$\\log_c ab$"
-        ],
-        "correctIndex": 0,
-        "explanation": "$a^{\\log_cb}=b^{\\log_ca}$ (지수에 있는 로그의 진수와 밑 $a$를 서로 바꿀 수 있다)"
-      },
-      {
-        "question": "$\\log_ab\\times\\log_bc$와 같은 것은?",
-        "choices": [
-          "$\\log_ac$",
-          "$\\log_ca$",
-          "$\\log_bac$",
-          "$\\log_a b c$",
+          "$a$",
+          "$a^{\\frac{13}{6}}$",
+          "$a^{\\frac49}$",
+          "$a^2$",
           "$1$"
         ],
         "correctIndex": 0,
-        "explanation": "밑변환: $\\dfrac{\\log b}{\\log a}\\times\\dfrac{\\log c}{\\log b}=\\dfrac{\\log c}{\\log a}=\\log_ac$"
+        "explanation": "$(a^x)^y=a^{xy}$: $\\dfrac23\\times\\dfrac32=1$"
       },
       {
-        "question": "$\\log_28+\\log_3\\dfrac19$의 값은?",
+        "question": "$a>0$일 때 $\\sqrt{a\\sqrt{a}}$를 $a^k$ 꼴로 나타내면?",
         "choices": [
-          "$1$",
-          "$5$",
-          "$-1$",
-          "$\\dfrac{8}{9}$",
-          "$3$"
+          "$a^{\\frac34}$",
+          "$a^{\\frac32}$",
+          "$a^{\\frac14}$",
+          "$a^{\\frac12}$",
+          "$a$"
         ],
         "correctIndex": 0,
-        "explanation": "$\\log_28=3$, $\\log_3\\dfrac19=-2$이므로 합은 $1$"
+        "explanation": "$\\sqrt{a\\cdot a^{\\frac12}}=\\left(a^{\\frac32}\\right)^{\\frac12}=a^{\\frac34}$"
       },
       {
-        "question": "상용로그 $\\log N$의 밑은?",
+        "question": "$a>0$이고 $a^x=3$일 때 $a^{2x}$과 $a^{-x}$의 값을 차례로 쓴 것은?",
         "choices": [
-          "$10$",
-          "$e$",
+          "$9,\\ \\dfrac13$",
+          "$6,\\ -3$",
+          "$9,\\ -3$",
+          "$6,\\ \\dfrac13$",
+          "$3,\\ \\dfrac13$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a^{2x}=(a^x)^2=9$, $a^{-x}=\\dfrac1{a^x}=\\dfrac13$"
+      },
+      {
+        "question": "$\\left(\\dfrac14\\right)^{-\\frac12}$의 값은?",
+        "choices": [
           "$2$",
-          "$1$",
-          "$N$"
+          "$\\dfrac12$",
+          "$-2$",
+          "$-\\dfrac12$",
+          "$16$"
         ],
         "correctIndex": 0,
-        "explanation": "밑이 10인 로그 $\\log_{10}N$을 상용로그라 하고, 밑을 생략해 $\\log N$으로 쓴다."
-      },
-      {
-        "question": "$\\log2=0.3010$일 때 $\\log200$의 값은?",
-        "choices": [
-          "$2.3010$",
-          "$0.6020$",
-          "$20.3010$",
-          "$3.3010$",
-          "$0.3010\\times100$"
-        ],
-        "correctIndex": 0,
-        "explanation": "$\\log200=\\log(10^2\\times2)=2+\\log2=2.3010$"
-      },
-      {
-        "question": "지수함수 $y=a^x\\ (a>0,\\ a\\ne1)$의 성질로 옳지 않은 것은?",
-        "choices": [
-          "그래프는 점 $(1,0)$을 지난다.",
-          "정의역은 실수 전체이다.",
-          "치역은 양의 실수 전체이다.",
-          "그래프의 점근선은 $x$축($y=0$)이다.",
-          "$a>1$이면 $x$가 커질 때 $y$도 커진다."
-        ],
-        "correctIndex": 0,
-        "explanation": "$y=a^x$는 점 $(0,1)$을 지난다. 점 $(1,0)$을 지나는 것은 로그함수 $y=\\log_ax$."
-      },
-      {
-        "question": "$0<a<1$일 때 지수함수 $y=a^x$에 대한 설명으로 옳은 것은?",
-        "choices": [
-          "$x$의 값이 커지면 $y$의 값은 작아진다(감소함수).",
-          "$x$의 값이 커지면 $y$의 값도 커진다.",
-          "그래프는 점 $(1,0)$을 지난다.",
-          "치역은 실수 전체이다.",
-          "그래프의 점근선은 $y$축이다."
-        ],
-        "correctIndex": 0,
-        "explanation": "$0<a<1$이면 $y=a^x$는 감소함수, $a>1$이면 증가함수."
-      },
-      {
-        "question": "두 함수 $y=a^x$와 $y=\\left(\\dfrac1a\\right)^x$의 그래프의 관계는?",
-        "choices": [
-          "$y$축에 대하여 대칭",
-          "$x$축에 대하여 대칭",
-          "원점에 대하여 대칭",
-          "직선 $y=x$에 대하여 대칭",
-          "서로 일치"
-        ],
-        "correctIndex": 0,
-        "explanation": "$\\left(\\dfrac1a\\right)^x=a^{-x}$이므로 $x$ 대신 $-x$를 넣은 것 → $y$축 대칭."
-      },
-      {
-        "question": "두 함수 $y=a^x$와 $y=\\log_ax$의 그래프의 관계는?",
-        "choices": [
-          "직선 $y=x$에 대하여 대칭(서로 역함수)",
-          "$x$축에 대하여 대칭",
-          "$y$축에 대하여 대칭",
-          "원점에 대하여 대칭",
-          "평행이동 관계"
-        ],
-        "correctIndex": 0,
-        "explanation": "$y=\\log_ax$는 $y=a^x$의 역함수이므로 두 그래프는 $y=x$에 대하여 대칭."
-      },
-      {
-        "question": "로그함수 $y=\\log_ax\\ (a>0,\\ a\\ne1)$의 성질로 옳은 것은?",
-        "choices": [
-          "정의역은 양의 실수 전체, 점근선은 $y$축($x=0$)이다.",
-          "정의역은 실수 전체이다.",
-          "치역은 양의 실수 전체이다.",
-          "그래프는 점 $(0,1)$을 지난다.",
-          "점근선은 $x$축이다."
-        ],
-        "correctIndex": 0,
-        "explanation": "$y=\\log_ax$: 정의역 $x>0$, 치역 실수 전체, 점 $(1,0)$과 $(a,1)$을 지나고 점근선은 $x=0$."
-      },
-      {
-        "question": "$y=\\log_ax$와 $y=\\log_{\\frac1a}x$의 그래프의 관계는?",
-        "choices": [
-          "$x$축에 대하여 대칭",
-          "$y$축에 대하여 대칭",
-          "원점에 대하여 대칭",
-          "직선 $y=x$에 대하여 대칭",
-          "서로 일치"
-        ],
-        "correctIndex": 0,
-        "explanation": "$\\log_{\\frac1a}x=-\\log_ax$이므로 $x$축 대칭."
-      },
-      {
-        "question": "$0<a<1$일 때 부등식 $a^{f(x)}<a^{g(x)}$와 같은 것은?",
-        "choices": [
-          "$f(x)>g(x)$",
-          "$f(x)<g(x)$",
-          "$f(x)=g(x)$",
-          "$f(x)\\le g(x)$",
-          "$|f(x)|<|g(x)|$"
-        ],
-        "correctIndex": 0,
-        "explanation": "밑이 1보다 작으면 감소함수라서 지수를 비교할 때 부등호 방향이 바뀐다."
-      },
-      {
-        "question": "$a>1$일 때 부등식 $\\log_af(x)<\\log_ag(x)$와 같은 것은?",
-        "choices": [
-          "$0<f(x)<g(x)$",
-          "$f(x)<g(x)$",
-          "$f(x)>g(x)>0$",
-          "$0<g(x)<f(x)$",
-          "$f(x)<g(x)<0$"
-        ],
-        "correctIndex": 0,
-        "explanation": "밑이 1보다 크면 부등호 방향 그대로. 진수 조건 $f(x)>0,\\ g(x)>0$을 꼭 함께 따진다."
+        "explanation": "$\\left(\\dfrac14\\right)^{-\\frac12}=4^{\\frac12}=2$"
       }
     ]
   },
