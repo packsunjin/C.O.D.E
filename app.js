@@ -26,6 +26,19 @@
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
   }
 
+  // 1회 정리(요청에 따라): 사진으로 만든 학습지와 오답노트를 한 번만 비운다. API 키·설정은 그대로.
+  const CLEANUP_KEY = 'jjok:cleanup-2026-09-29';
+  if (!read(CLEANUP_KEY, false)) {
+    const old = read(KEYS.sets, []);
+    const best = read(KEYS.best, {});
+    for (const s of old) delete best[s.id];
+    write(KEYS.sets, []);
+    write(KEYS.wrong, {});
+    write(KEYS.best, best);
+    try { indexedDB.deleteDatabase('jjok'); } catch {}
+    write(CLEANUP_KEY, true);
+  }
+
   const store = {
     userSets: read(KEYS.sets, []),
     wrong: read(KEYS.wrong, {}),
