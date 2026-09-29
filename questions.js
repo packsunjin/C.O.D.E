@@ -1,6 +1,1059 @@
 // 기본으로 들어 있는 학습지 문제. 사진으로 만든 학습지는 브라우저(localStorage)에 따로 저장된다.
 window.BUILTIN_SETS = [
   {
+    "id": "algebra-exp-log",
+    "subject": "대수",
+    "title": "I. 지수함수와 로그함수 공식",
+    "questions": [
+      {
+        "question": "$n$이 홀수일 때, 실수 $a$의 $n$제곱근 중 실수인 것의 개수는?",
+        "choices": [
+          "항상 1개",
+          "항상 2개",
+          "$a>0$일 때만 1개",
+          "항상 0개",
+          "$a$에 따라 0개 또는 2개"
+        ],
+        "correctIndex": 0,
+        "explanation": "$n$이 홀수이면 실수 $a$의 $n$제곱근 중 실수는 $\\sqrt[n]{a}$ 하나뿐이다."
+      },
+      {
+        "question": "$n$이 짝수이고 $a>0$일 때, $a$의 $n$제곱근 중 실수인 것은?",
+        "choices": [
+          "$\\sqrt[n]{a}$, $-\\sqrt[n]{a}$ 두 개",
+          "$\\sqrt[n]{a}$ 하나",
+          "없다",
+          "$-\\sqrt[n]{a}$ 하나",
+          "$n$개"
+        ],
+        "correctIndex": 0,
+        "explanation": "$n$이 짝수일 때 실수 $n$제곱근: $a>0$이면 $\\pm\\sqrt[n]{a}$ 2개, $a=0$이면 0 하나, $a<0$이면 없다."
+      },
+      {
+        "question": "$n$이 짝수이고 $a<0$일 때, $a$의 $n$제곱근 중 실수인 것의 개수는?",
+        "choices": [
+          "0개",
+          "1개",
+          "2개",
+          "$n$개",
+          "무수히 많다"
+        ],
+        "correctIndex": 0,
+        "explanation": "짝수 제곱해서 음수가 되는 실수는 없으므로 0개."
+      },
+      {
+        "question": "$a>0,\\ b>0$이고 $n$이 2 이상의 정수일 때, $\\sqrt[n]{a}\\,\\sqrt[n]{b}$와 같은 것은?",
+        "choices": [
+          "$\\sqrt[n]{ab}$",
+          "$\\sqrt[2n]{ab}$",
+          "$\\sqrt[n]{a+b}$",
+          "$\\sqrt[n^2]{ab}$",
+          "$\\sqrt[n]{a}+\\sqrt[n]{b}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "거듭제곱근의 성질: $\\sqrt[n]{a}\\sqrt[n]{b}=\\sqrt[n]{ab}$"
+      },
+      {
+        "question": "$a>0$일 때, $\\left(\\sqrt[n]{a}\\right)^m$과 같은 것은?",
+        "choices": [
+          "$\\sqrt[n]{a^m}$",
+          "$\\sqrt[m]{a^n}$",
+          "$\\sqrt[mn]{a}$",
+          "$\\sqrt[n]{a}\\cdot m$",
+          "$\\sqrt[n+m]{a}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "거듭제곱근의 성질: $\\left(\\sqrt[n]{a}\\right)^m=\\sqrt[n]{a^m}$"
+      },
+      {
+        "question": "$a>0$일 때, $\\sqrt[m]{\\sqrt[n]{a}}$와 같은 것은?",
+        "choices": [
+          "$\\sqrt[mn]{a}$",
+          "$\\sqrt[m+n]{a}$",
+          "$\\sqrt[n]{a^m}$",
+          "$\\sqrt[m]{a^n}$",
+          "$\\sqrt[m-n]{a}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "거듭제곱근의 성질: $\\sqrt[m]{\\sqrt[n]{a}}=\\sqrt[mn]{a}$"
+      },
+      {
+        "question": "$a>0$일 때, $\\sqrt[np]{a^{mp}}$와 같은 것은?",
+        "choices": [
+          "$\\sqrt[n]{a^m}$",
+          "$\\sqrt[p]{a^m}$",
+          "$\\sqrt[n]{a^{p}}$",
+          "$\\sqrt[mp]{a^n}$",
+          "$a^{np}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "거듭제곱근의 성질: $\\sqrt[np]{a^{mp}}=\\sqrt[n]{a^m}$ (지수와 근호의 수를 같은 수로 나눌 수 있다)"
+      },
+      {
+        "question": "$a\\neq0$일 때, $a^0$과 $a^{-n}$을 바르게 나타낸 것은?",
+        "choices": [
+          "$a^0=1,\\ a^{-n}=\\dfrac{1}{a^n}$",
+          "$a^0=0,\\ a^{-n}=\\dfrac{1}{a^n}$",
+          "$a^0=1,\\ a^{-n}=-a^n$",
+          "$a^0=a,\\ a^{-n}=\\dfrac{1}{a^n}$",
+          "$a^0=0,\\ a^{-n}=-a^n$"
+        ],
+        "correctIndex": 0,
+        "explanation": "지수의 확장: $a^0=1$, $a^{-n}=\\dfrac{1}{a^n}$ ($a\\neq0$)"
+      },
+      {
+        "question": "$a>0$이고 $m,n$이 정수($n\\ge2$)일 때, $a^{\\frac{m}{n}}$과 같은 것은?",
+        "choices": [
+          "$\\sqrt[n]{a^m}$",
+          "$\\sqrt[m]{a^n}$",
+          "$\\dfrac{a^m}{n}$",
+          "$\\left(\\sqrt[m]{a}\\right)^n$",
+          "$m\\sqrt[n]{a}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "유리수 지수: $a^{\\frac{m}{n}}=\\sqrt[n]{a^m}$, 특히 $a^{\\frac1n}=\\sqrt[n]{a}$"
+      },
+      {
+        "question": "유리수 지수 $a^{\\frac{m}{n}}$을 정의할 때 밑 $a$의 조건은?",
+        "choices": [
+          "$a>0$",
+          "$a\\neq0$",
+          "$a$는 모든 실수",
+          "$a\\ge1$",
+          "$a<0$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑이 음수이면 $(-8)^{\\frac13}$과 $(-8)^{\\frac26}$의 값이 달라지는 문제가 생겨서, 유리수·실수 지수에서는 $a>0$으로 한다."
+      },
+      {
+        "question": "$a>0$이고 $x,y$가 실수일 때, 지수법칙으로 옳지 않은 것은?",
+        "choices": [
+          "$a^x+a^y=a^{x+y}$",
+          "$a^xa^y=a^{x+y}$",
+          "$a^x\\div a^y=a^{x-y}$",
+          "$(a^x)^y=a^{xy}$",
+          "$(ab)^x=a^xb^x\\ (b>0)$"
+        ],
+        "correctIndex": 0,
+        "explanation": "지수법칙은 곱셈·나눗셈·거듭제곱에 대한 것이다. 덧셈 $a^x+a^y$는 $a^{x+y}$와 다르다."
+      },
+      {
+        "question": "$8^{\\frac23}$의 값은?",
+        "choices": [
+          "$4$",
+          "$\\dfrac{16}{3}$",
+          "$2$",
+          "$6$",
+          "$\\sqrt[3]{64}\\cdot2$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$8^{\\frac23}=(2^3)^{\\frac23}=2^2=4$"
+      },
+      {
+        "question": "$a^x=N$일 때 $x$를 로그로 나타낸 것은? (단, $a>0,\\ a\\ne1,\\ N>0$)",
+        "choices": [
+          "$x=\\log_a N$",
+          "$x=\\log_N a$",
+          "$N=\\log_a x$",
+          "$a=\\log_x N$",
+          "$x=\\log a^N$"
+        ],
+        "correctIndex": 0,
+        "explanation": "로그의 정의: $a^x=N \\iff x=\\log_a N$ ($a$는 밑, $N$은 진수)"
+      },
+      {
+        "question": "$\\log_a N$이 정의되기 위한 조건은?",
+        "choices": [
+          "$a>0,\\ a\\ne1,\\ N>0$",
+          "$a>0,\\ N>0$",
+          "$a\\ne1,\\ N\\ne0$",
+          "$a>1,\\ N>1$",
+          "$a>0,\\ a\\ne1,\\ N\\ge0$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑 조건: $a>0,\\ a\\ne1$ / 진수 조건: $N>0$"
+      },
+      {
+        "question": "$a>0,\\ a\\ne1$일 때 $\\log_a 1$과 $\\log_a a$의 값은?",
+        "choices": [
+          "$\\log_a1=0,\\ \\log_aa=1$",
+          "$\\log_a1=1,\\ \\log_aa=0$",
+          "$\\log_a1=1,\\ \\log_aa=1$",
+          "$\\log_a1=0,\\ \\log_aa=0$",
+          "$\\log_a1=a,\\ \\log_aa=1$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a^0=1$이므로 $\\log_a1=0$, $a^1=a$이므로 $\\log_aa=1$."
+      },
+      {
+        "question": "$M>0,\\ N>0$일 때 $\\log_a MN$과 같은 것은?",
+        "choices": [
+          "$\\log_aM+\\log_aN$",
+          "$\\log_aM\\times\\log_aN$",
+          "$\\log_aM-\\log_aN$",
+          "$\\log_a(M+N)$",
+          "$N\\log_aM$"
+        ],
+        "correctIndex": 0,
+        "explanation": "로그의 성질: $\\log_aMN=\\log_aM+\\log_aN$"
+      },
+      {
+        "question": "$M>0,\\ N>0$일 때 $\\log_a\\dfrac{M}{N}$과 같은 것은?",
+        "choices": [
+          "$\\log_aM-\\log_aN$",
+          "$\\dfrac{\\log_aM}{\\log_aN}$",
+          "$\\log_aM+\\log_aN$",
+          "$\\log_a(M-N)$",
+          "$\\log_NM$"
+        ],
+        "correctIndex": 0,
+        "explanation": "로그의 성질: $\\log_a\\dfrac MN=\\log_aM-\\log_aN$. $\\dfrac{\\log_aM}{\\log_aN}$은 $\\log_NM$이다(밑변환)."
+      },
+      {
+        "question": "$M>0$이고 $k$가 실수일 때 $\\log_aM^k$과 같은 것은?",
+        "choices": [
+          "$k\\log_aM$",
+          "$(\\log_aM)^k$",
+          "$\\log_a kM$",
+          "$\\dfrac{1}{k}\\log_aM$",
+          "$k+\\log_aM$"
+        ],
+        "correctIndex": 0,
+        "explanation": "로그의 성질: $\\log_aM^k=k\\log_aM$"
+      },
+      {
+        "question": "밑변환 공식으로 옳은 것은? (단, $c>0,\\ c\\ne1$)",
+        "choices": [
+          "$\\log_ab=\\dfrac{\\log_cb}{\\log_ca}$",
+          "$\\log_ab=\\dfrac{\\log_ca}{\\log_cb}$",
+          "$\\log_ab=\\log_cb-\\log_ca$",
+          "$\\log_ab=\\log_ca\\cdot\\log_cb$",
+          "$\\log_ab=\\dfrac{\\log_bc}{\\log_ac}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑변환 공식: $\\log_ab=\\dfrac{\\log_cb}{\\log_ca}$ (분자에 진수, 분모에 밑)"
+      },
+      {
+        "question": "$\\log_ab$와 같은 것은? (단, $b>0,\\ b\\ne1$)",
+        "choices": [
+          "$\\dfrac{1}{\\log_ba}$",
+          "$-\\log_ba$",
+          "$\\log_ba$",
+          "$\\log_{\\frac1a}b$",
+          "$\\dfrac{1}{\\log_ab}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑변환 공식에서 $c=b$로 두면 $\\log_ab=\\dfrac{\\log_bb}{\\log_ba}=\\dfrac1{\\log_ba}$"
+      },
+      {
+        "question": "$\\log_{a^m}b^n$과 같은 것은? (단, $m\\ne0$)",
+        "choices": [
+          "$\\dfrac{n}{m}\\log_ab$",
+          "$\\dfrac{m}{n}\\log_ab$",
+          "$mn\\log_ab$",
+          "$(n-m)\\log_ab$",
+          "$\\log_ab^{\\frac mn}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\log_{a^m}b^n=\\dfrac{n}{m}\\log_ab$ (진수의 지수는 분자로, 밑의 지수는 분모로)"
+      },
+      {
+        "question": "$a^{\\log_ab}$의 값은? (단, $a>0,\\ a\\ne1,\\ b>0$)",
+        "choices": [
+          "$b$",
+          "$a$",
+          "$1$",
+          "$ab$",
+          "$\\log_ab$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\log_ab=x$라 하면 $a^x=b$이므로 $a^{\\log_ab}=b$"
+      },
+      {
+        "question": "$a^{\\log_cb}$와 같은 것은? (단, $a,b>0$, $c>0,\\ c\\ne1$)",
+        "choices": [
+          "$b^{\\log_ca}$",
+          "$c^{\\log_ab}$",
+          "$a^{\\log_bc}$",
+          "$b^{\\log_ac}$",
+          "$\\log_c ab$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a^{\\log_cb}=b^{\\log_ca}$ (지수에 있는 로그의 진수와 밑 $a$를 서로 바꿀 수 있다)"
+      },
+      {
+        "question": "$\\log_ab\\times\\log_bc$와 같은 것은?",
+        "choices": [
+          "$\\log_ac$",
+          "$\\log_ca$",
+          "$\\log_bac$",
+          "$\\log_a b c$",
+          "$1$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑변환: $\\dfrac{\\log b}{\\log a}\\times\\dfrac{\\log c}{\\log b}=\\dfrac{\\log c}{\\log a}=\\log_ac$"
+      },
+      {
+        "question": "$\\log_28+\\log_3\\dfrac19$의 값은?",
+        "choices": [
+          "$1$",
+          "$5$",
+          "$-1$",
+          "$\\dfrac{8}{9}$",
+          "$3$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\log_28=3$, $\\log_3\\dfrac19=-2$이므로 합은 $1$"
+      },
+      {
+        "question": "상용로그 $\\log N$의 밑은?",
+        "choices": [
+          "$10$",
+          "$e$",
+          "$2$",
+          "$1$",
+          "$N$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑이 10인 로그 $\\log_{10}N$을 상용로그라 하고, 밑을 생략해 $\\log N$으로 쓴다."
+      },
+      {
+        "question": "$\\log2=0.3010$일 때 $\\log200$의 값은?",
+        "choices": [
+          "$2.3010$",
+          "$0.6020$",
+          "$20.3010$",
+          "$3.3010$",
+          "$0.3010\\times100$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\log200=\\log(10^2\\times2)=2+\\log2=2.3010$"
+      },
+      {
+        "question": "지수함수 $y=a^x\\ (a>0,\\ a\\ne1)$의 성질로 옳지 않은 것은?",
+        "choices": [
+          "그래프는 점 $(1,0)$을 지난다.",
+          "정의역은 실수 전체이다.",
+          "치역은 양의 실수 전체이다.",
+          "그래프의 점근선은 $x$축($y=0$)이다.",
+          "$a>1$이면 $x$가 커질 때 $y$도 커진다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=a^x$는 점 $(0,1)$을 지난다. 점 $(1,0)$을 지나는 것은 로그함수 $y=\\log_ax$."
+      },
+      {
+        "question": "$0<a<1$일 때 지수함수 $y=a^x$에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "$x$의 값이 커지면 $y$의 값은 작아진다(감소함수).",
+          "$x$의 값이 커지면 $y$의 값도 커진다.",
+          "그래프는 점 $(1,0)$을 지난다.",
+          "치역은 실수 전체이다.",
+          "그래프의 점근선은 $y$축이다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$0<a<1$이면 $y=a^x$는 감소함수, $a>1$이면 증가함수."
+      },
+      {
+        "question": "두 함수 $y=a^x$와 $y=\\left(\\dfrac1a\\right)^x$의 그래프의 관계는?",
+        "choices": [
+          "$y$축에 대하여 대칭",
+          "$x$축에 대하여 대칭",
+          "원점에 대하여 대칭",
+          "직선 $y=x$에 대하여 대칭",
+          "서로 일치"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\left(\\dfrac1a\\right)^x=a^{-x}$이므로 $x$ 대신 $-x$를 넣은 것 → $y$축 대칭."
+      },
+      {
+        "question": "두 함수 $y=a^x$와 $y=\\log_ax$의 그래프의 관계는?",
+        "choices": [
+          "직선 $y=x$에 대하여 대칭(서로 역함수)",
+          "$x$축에 대하여 대칭",
+          "$y$축에 대하여 대칭",
+          "원점에 대하여 대칭",
+          "평행이동 관계"
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=\\log_ax$는 $y=a^x$의 역함수이므로 두 그래프는 $y=x$에 대하여 대칭."
+      },
+      {
+        "question": "로그함수 $y=\\log_ax\\ (a>0,\\ a\\ne1)$의 성질로 옳은 것은?",
+        "choices": [
+          "정의역은 양의 실수 전체, 점근선은 $y$축($x=0$)이다.",
+          "정의역은 실수 전체이다.",
+          "치역은 양의 실수 전체이다.",
+          "그래프는 점 $(0,1)$을 지난다.",
+          "점근선은 $x$축이다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=\\log_ax$: 정의역 $x>0$, 치역 실수 전체, 점 $(1,0)$과 $(a,1)$을 지나고 점근선은 $x=0$."
+      },
+      {
+        "question": "$y=\\log_ax$와 $y=\\log_{\\frac1a}x$의 그래프의 관계는?",
+        "choices": [
+          "$x$축에 대하여 대칭",
+          "$y$축에 대하여 대칭",
+          "원점에 대하여 대칭",
+          "직선 $y=x$에 대하여 대칭",
+          "서로 일치"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\log_{\\frac1a}x=-\\log_ax$이므로 $x$축 대칭."
+      },
+      {
+        "question": "$0<a<1$일 때 부등식 $a^{f(x)}<a^{g(x)}$와 같은 것은?",
+        "choices": [
+          "$f(x)>g(x)$",
+          "$f(x)<g(x)$",
+          "$f(x)=g(x)$",
+          "$f(x)\\le g(x)$",
+          "$|f(x)|<|g(x)|$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑이 1보다 작으면 감소함수라서 지수를 비교할 때 부등호 방향이 바뀐다."
+      },
+      {
+        "question": "$a>1$일 때 부등식 $\\log_af(x)<\\log_ag(x)$와 같은 것은?",
+        "choices": [
+          "$0<f(x)<g(x)$",
+          "$f(x)<g(x)$",
+          "$f(x)>g(x)>0$",
+          "$0<g(x)<f(x)$",
+          "$f(x)<g(x)<0$"
+        ],
+        "correctIndex": 0,
+        "explanation": "밑이 1보다 크면 부등호 방향 그대로. 진수 조건 $f(x)>0,\\ g(x)>0$을 꼭 함께 따진다."
+      }
+    ]
+  },
+  {
+    "id": "algebra-trig",
+    "subject": "대수",
+    "title": "II. 삼각함수 공식 (그래프까지)",
+    "questions": [
+      {
+        "question": "$1$ 라디안을 도(°)로 나타낸 것은?",
+        "choices": [
+          "$\\dfrac{180^\\circ}{\\pi}$",
+          "$\\dfrac{\\pi}{180^\\circ}$",
+          "$180^\\circ$",
+          "$360^\\circ$",
+          "$\\pi^\\circ$"
+        ],
+        "correctIndex": 0,
+        "explanation": "호도법: $\\pi$ 라디안 $=180^\\circ$이므로 $1$ 라디안 $=\\dfrac{180^\\circ}{\\pi}$, $1^\\circ=\\dfrac{\\pi}{180}$ 라디안."
+      },
+      {
+        "question": "$150^\\circ$를 호도법으로 나타낸 것은?",
+        "choices": [
+          "$\\dfrac{5}{6}\\pi$",
+          "$\\dfrac{3}{4}\\pi$",
+          "$\\dfrac{2}{3}\\pi$",
+          "$\\dfrac{5}{3}\\pi$",
+          "$\\dfrac{7}{6}\\pi$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$150\\times\\dfrac{\\pi}{180}=\\dfrac56\\pi$"
+      },
+      {
+        "question": "반지름의 길이가 $r$, 중심각의 크기가 $\\theta$(라디안)인 부채꼴의 호의 길이 $l$은?",
+        "choices": [
+          "$l=r\\theta$",
+          "$l=\\dfrac12r\\theta$",
+          "$l=r^2\\theta$",
+          "$l=2\\pi r\\theta$",
+          "$l=\\dfrac12r^2\\theta$"
+        ],
+        "correctIndex": 0,
+        "explanation": "부채꼴의 호의 길이 $l=r\\theta$"
+      },
+      {
+        "question": "반지름의 길이가 $r$, 중심각의 크기가 $\\theta$, 호의 길이가 $l$인 부채꼴의 넓이 $S$는?",
+        "choices": [
+          "$S=\\dfrac12r^2\\theta=\\dfrac12rl$",
+          "$S=r^2\\theta=rl$",
+          "$S=\\dfrac12r\\theta=\\dfrac12l$",
+          "$S=\\pi r^2\\theta$",
+          "$S=\\dfrac12r^2l$"
+        ],
+        "correctIndex": 0,
+        "explanation": "부채꼴의 넓이 $S=\\dfrac12r^2\\theta=\\dfrac12rl$"
+      },
+      {
+        "question": "동경 $OP$가 나타내는 한 각의 크기를 $\\alpha$라 할 때, 일반각 $\\theta$는? (단, $n$은 정수)",
+        "choices": [
+          "$\\theta=2n\\pi+\\alpha$",
+          "$\\theta=n\\pi+\\alpha$",
+          "$\\theta=2n\\pi\\alpha$",
+          "$\\theta=\\dfrac{n\\pi}{2}+\\alpha$",
+          "$\\theta=n\\alpha$"
+        ],
+        "correctIndex": 0,
+        "explanation": "일반각: $\\theta=2n\\pi+\\alpha$ (육십분법으로는 $360^\\circ\\times n+\\alpha$)"
+      },
+      {
+        "question": "원점 $O$와 점 $P(x,y)$에 대하여 $\\overline{OP}=r$이고 동경 $OP$가 나타내는 각이 $\\theta$일 때, 옳은 것은?",
+        "choices": [
+          "$\\sin\\theta=\\dfrac yr,\\ \\cos\\theta=\\dfrac xr,\\ \\tan\\theta=\\dfrac yx$",
+          "$\\sin\\theta=\\dfrac xr,\\ \\cos\\theta=\\dfrac yr,\\ \\tan\\theta=\\dfrac xy$",
+          "$\\sin\\theta=\\dfrac ry,\\ \\cos\\theta=\\dfrac rx,\\ \\tan\\theta=\\dfrac xy$",
+          "$\\sin\\theta=\\dfrac yx,\\ \\cos\\theta=\\dfrac xr,\\ \\tan\\theta=\\dfrac yr$",
+          "$\\sin\\theta=\\dfrac xy,\\ \\cos\\theta=\\dfrac yx,\\ \\tan\\theta=\\dfrac yr$"
+        ],
+        "correctIndex": 0,
+        "explanation": "삼각함수의 정의: $\\sin\\theta=\\dfrac yr$, $\\cos\\theta=\\dfrac xr$, $\\tan\\theta=\\dfrac yx\\ (x\\ne0)$"
+      },
+      {
+        "question": "$\\theta$가 제3사분면의 각일 때, 값이 양수인 삼각함수는?",
+        "choices": [
+          "$\\tan\\theta$",
+          "$\\sin\\theta$",
+          "$\\cos\\theta$",
+          "$\\sin\\theta$와 $\\cos\\theta$",
+          "없다"
+        ],
+        "correctIndex": 0,
+        "explanation": "부호 암기 \"얼-사-탄-코\": 1사분면 모두 +, 2사분면 $\\sin$만 +, 3사분면 $\\tan$만 +, 4사분면 $\\cos$만 +."
+      },
+      {
+        "question": "$\\theta$가 제2사분면의 각일 때, 값이 양수인 삼각함수는?",
+        "choices": [
+          "$\\sin\\theta$",
+          "$\\cos\\theta$",
+          "$\\tan\\theta$",
+          "$\\cos\\theta$와 $\\tan\\theta$",
+          "모두"
+        ],
+        "correctIndex": 0,
+        "explanation": "2사분면에서는 $y>0,\\ x<0$이므로 $\\sin\\theta>0$, $\\cos\\theta<0$, $\\tan\\theta<0$."
+      },
+      {
+        "question": "삼각함수 사이의 관계로 옳은 것은?",
+        "choices": [
+          "$\\sin^2\\theta+\\cos^2\\theta=1$",
+          "$\\sin\\theta+\\cos\\theta=1$",
+          "$\\sin^2\\theta-\\cos^2\\theta=1$",
+          "$\\tan\\theta=\\dfrac{\\cos\\theta}{\\sin\\theta}$",
+          "$\\sin\\theta\\cos\\theta=1$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\tan\\theta=\\dfrac{\\sin\\theta}{\\cos\\theta}$, $\\sin^2\\theta+\\cos^2\\theta=1$"
+      },
+      {
+        "question": "$\\sin\\theta+\\cos\\theta=k$일 때 $\\sin\\theta\\cos\\theta$의 값은?",
+        "choices": [
+          "$\\dfrac{k^2-1}{2}$",
+          "$\\dfrac{k^2+1}{2}$",
+          "$k^2-1$",
+          "$\\dfrac{1-k^2}{2}$",
+          "$\\dfrac{k-1}{2}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "양변을 제곱하면 $1+2\\sin\\theta\\cos\\theta=k^2$이므로 $\\sin\\theta\\cos\\theta=\\dfrac{k^2-1}{2}$"
+      },
+      {
+        "question": "$\\sin\\dfrac{\\pi}{6},\\ \\cos\\dfrac{\\pi}{6},\\ \\tan\\dfrac{\\pi}{6}$의 값을 차례로 쓴 것은?",
+        "choices": [
+          "$\\dfrac12,\\ \\dfrac{\\sqrt3}{2},\\ \\dfrac{\\sqrt3}{3}$",
+          "$\\dfrac{\\sqrt3}{2},\\ \\dfrac12,\\ \\sqrt3$",
+          "$\\dfrac12,\\ \\dfrac{\\sqrt3}{2},\\ \\sqrt3$",
+          "$\\dfrac{\\sqrt2}{2},\\ \\dfrac{\\sqrt2}{2},\\ 1$",
+          "$\\dfrac{\\sqrt3}{2},\\ \\dfrac12,\\ \\dfrac{\\sqrt3}{3}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac\\pi6(30^\\circ)$: $\\sin=\\dfrac12$, $\\cos=\\dfrac{\\sqrt3}{2}$, $\\tan=\\dfrac1{\\sqrt3}=\\dfrac{\\sqrt3}{3}$"
+      },
+      {
+        "question": "$\\tan\\dfrac{\\pi}{3}$의 값은?",
+        "choices": [
+          "$\\sqrt3$",
+          "$\\dfrac{\\sqrt3}{3}$",
+          "$1$",
+          "$\\dfrac{\\sqrt3}{2}$",
+          "$\\dfrac12$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac\\pi3(60^\\circ)$: $\\sin=\\dfrac{\\sqrt3}2$, $\\cos=\\dfrac12$, $\\tan=\\sqrt3$"
+      },
+      {
+        "question": "함수 $y=\\sin x$에 대한 설명으로 옳지 않은 것은?",
+        "choices": [
+          "그래프는 $y$축에 대하여 대칭이다.",
+          "주기가 $2\\pi$인 주기함수이다.",
+          "치역은 $\\{y\\mid-1\\le y\\le1\\}$이다.",
+          "그래프는 원점에 대하여 대칭이다.",
+          "정의역은 실수 전체이다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=\\sin x$는 원점 대칭($\\sin(-x)=-\\sin x$). $y$축 대칭은 $y=\\cos x$."
+      },
+      {
+        "question": "함수 $y=\\cos x$의 그래프에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "$y$축에 대하여 대칭이고 주기는 $2\\pi$이다.",
+          "원점에 대하여 대칭이고 주기는 $\\pi$이다.",
+          "점근선이 있다.",
+          "치역은 실수 전체이다.",
+          "점 $(0,0)$을 지난다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\cos(-x)=\\cos x$이므로 $y$축 대칭, 주기 $2\\pi$, 치역 $[-1,1]$, 점 $(0,1)$을 지난다."
+      },
+      {
+        "question": "함수 $y=\\tan x$에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "주기는 $\\pi$이고, 점근선은 $x=n\\pi+\\dfrac\\pi2$ ($n$은 정수)이다.",
+          "주기는 $2\\pi$이고 점근선은 없다.",
+          "치역은 $\\{y\\mid-1\\le y\\le1\\}$이다.",
+          "그래프는 $y$축에 대하여 대칭이다.",
+          "정의역은 실수 전체이다."
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=\\tan x$: 정의역은 $x\\ne n\\pi+\\dfrac\\pi2$인 실수, 치역 실수 전체, 주기 $\\pi$, 원점 대칭, 점근선 $x=n\\pi+\\dfrac\\pi2$."
+      },
+      {
+        "question": "함수 $y=a\\sin(bx+c)+d$의 최댓값, 최솟값, 주기를 바르게 쓴 것은?",
+        "choices": [
+          "최댓값 $|a|+d$, 최솟값 $-|a|+d$, 주기 $\\dfrac{2\\pi}{|b|}$",
+          "최댓값 $a+d$, 최솟값 $a-d$, 주기 $2\\pi|b|$",
+          "최댓값 $|a|$, 최솟값 $-|a|$, 주기 $\\dfrac{\\pi}{|b|}$",
+          "최댓값 $|a|+d$, 최솟값 $-|a|+d$, 주기 $\\dfrac{\\pi}{|b|}$",
+          "최댓값 $|b|+d$, 최솟값 $-|b|+d$, 주기 $\\dfrac{2\\pi}{|a|}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$y=a\\sin(bx+c)+d$, $y=a\\cos(bx+c)+d$: 최댓값 $|a|+d$, 최솟값 $-|a|+d$, 주기 $\\dfrac{2\\pi}{|b|}$"
+      },
+      {
+        "question": "함수 $y=a\\tan(bx+c)+d$의 주기는?",
+        "choices": [
+          "$\\dfrac{\\pi}{|b|}$",
+          "$\\dfrac{2\\pi}{|b|}$",
+          "$\\pi|b|$",
+          "$\\dfrac{\\pi}{|a|}$",
+          "$2\\pi$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\tan$의 주기는 $\\pi$이므로 $y=a\\tan(bx+c)+d$의 주기는 $\\dfrac{\\pi}{|b|}$ (최댓값·최솟값은 없다)."
+      },
+      {
+        "question": "함수 $y=3\\sin2x-1$의 최댓값과 주기를 차례로 쓴 것은?",
+        "choices": [
+          "$2,\\ \\pi$",
+          "$3,\\ \\pi$",
+          "$2,\\ 2\\pi$",
+          "$4,\\ \\pi$",
+          "$3,\\ 4\\pi$"
+        ],
+        "correctIndex": 0,
+        "explanation": "최댓값 $|3|+(-1)=2$, 주기 $\\dfrac{2\\pi}{2}=\\pi$"
+      },
+      {
+        "question": "$\\sin(-x),\\ \\cos(-x),\\ \\tan(-x)$를 바르게 나타낸 것은?",
+        "choices": [
+          "$-\\sin x,\\ \\cos x,\\ -\\tan x$",
+          "$\\sin x,\\ -\\cos x,\\ \\tan x$",
+          "$-\\sin x,\\ -\\cos x,\\ -\\tan x$",
+          "$\\sin x,\\ \\cos x,\\ -\\tan x$",
+          "$-\\sin x,\\ \\cos x,\\ \\tan x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "음각: $\\cos$만 부호가 그대로이고 $\\sin,\\ \\tan$은 부호가 바뀐다."
+      },
+      {
+        "question": "$\\sin(\\pi-x)$와 $\\cos(\\pi-x)$를 바르게 나타낸 것은?",
+        "choices": [
+          "$\\sin x,\\ -\\cos x$",
+          "$-\\sin x,\\ \\cos x$",
+          "$-\\sin x,\\ -\\cos x$",
+          "$\\cos x,\\ \\sin x$",
+          "$\\sin x,\\ \\cos x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\pi-x$는 2사분면 쪽이므로 $\\sin$은 +, $\\cos$은 −: $\\sin(\\pi-x)=\\sin x$, $\\cos(\\pi-x)=-\\cos x$, $\\tan(\\pi-x)=-\\tan x$"
+      },
+      {
+        "question": "$\\sin(\\pi+x),\\ \\cos(\\pi+x),\\ \\tan(\\pi+x)$를 바르게 나타낸 것은?",
+        "choices": [
+          "$-\\sin x,\\ -\\cos x,\\ \\tan x$",
+          "$\\sin x,\\ \\cos x,\\ \\tan x$",
+          "$-\\sin x,\\ \\cos x,\\ -\\tan x$",
+          "$\\sin x,\\ -\\cos x,\\ -\\tan x$",
+          "$-\\cos x,\\ -\\sin x,\\ \\tan x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\pi+x$는 3사분면 쪽: $\\tan$만 +. $\\tan$의 주기가 $\\pi$이므로 $\\tan(\\pi+x)=\\tan x$."
+      },
+      {
+        "question": "$\\sin\\left(\\dfrac\\pi2-x\\right)$와 $\\cos\\left(\\dfrac\\pi2-x\\right)$를 바르게 나타낸 것은?",
+        "choices": [
+          "$\\cos x,\\ \\sin x$",
+          "$\\sin x,\\ \\cos x$",
+          "$-\\cos x,\\ \\sin x$",
+          "$\\cos x,\\ -\\sin x$",
+          "$-\\sin x,\\ -\\cos x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac\\pi2\\pm x$ 꼴은 $\\sin\\leftrightarrow\\cos$으로 바뀐다. $\\dfrac\\pi2-x$는 1사분면 쪽이라 모두 +: $\\sin\\left(\\dfrac\\pi2-x\\right)=\\cos x$, $\\cos\\left(\\dfrac\\pi2-x\\right)=\\sin x$, $\\tan\\left(\\dfrac\\pi2-x\\right)=\\dfrac1{\\tan x}$"
+      },
+      {
+        "question": "$\\sin\\left(\\dfrac\\pi2+x\\right)$와 $\\cos\\left(\\dfrac\\pi2+x\\right)$를 바르게 나타낸 것은?",
+        "choices": [
+          "$\\cos x,\\ -\\sin x$",
+          "$\\cos x,\\ \\sin x$",
+          "$-\\cos x,\\ \\sin x$",
+          "$\\sin x,\\ -\\cos x$",
+          "$-\\cos x,\\ -\\sin x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac\\pi2+x$는 2사분면 쪽: $\\sin$은 +, $\\cos$은 −. $\\sin\\left(\\dfrac\\pi2+x\\right)=\\cos x$, $\\cos\\left(\\dfrac\\pi2+x\\right)=-\\sin x$"
+      },
+      {
+        "question": "$\\sin(2n\\pi+x)$와 같은 것은? (단, $n$은 정수)",
+        "choices": [
+          "$\\sin x$",
+          "$-\\sin x$",
+          "$\\cos x$",
+          "$\\sin 2x$",
+          "$n\\sin x$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\sin,\\ \\cos$은 주기가 $2\\pi$이므로 $\\sin(2n\\pi+x)=\\sin x$, $\\cos(2n\\pi+x)=\\cos x$. $\\tan(n\\pi+x)=\\tan x$."
+      },
+      {
+        "question": "$\\cos\\dfrac{2}{3}\\pi$의 값은?",
+        "choices": [
+          "$-\\dfrac12$",
+          "$\\dfrac12$",
+          "$-\\dfrac{\\sqrt3}{2}$",
+          "$\\dfrac{\\sqrt3}{2}$",
+          "$-1$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\cos\\dfrac23\\pi=\\cos\\left(\\pi-\\dfrac\\pi3\\right)=-\\cos\\dfrac\\pi3=-\\dfrac12$"
+      },
+      {
+        "question": "$\\sin\\dfrac{7}{6}\\pi$의 값은?",
+        "choices": [
+          "$-\\dfrac12$",
+          "$\\dfrac12$",
+          "$-\\dfrac{\\sqrt3}{2}$",
+          "$\\dfrac{\\sqrt3}{2}$",
+          "$0$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\sin\\dfrac76\\pi=\\sin\\left(\\pi+\\dfrac\\pi6\\right)=-\\sin\\dfrac\\pi6=-\\dfrac12$"
+      }
+    ]
+  },
+  {
+    "id": "algebra-sequence",
+    "subject": "대수",
+    "title": "III. 수열 공식 (귀납적 정의까지)",
+    "questions": [
+      {
+        "question": "첫째항이 $a$, 공차가 $d$인 등차수열의 일반항 $a_n$은?",
+        "choices": [
+          "$a_n=a+(n-1)d$",
+          "$a_n=a+nd$",
+          "$a_n=ad^{n-1}$",
+          "$a_n=a+(n+1)d$",
+          "$a_n=nd$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등차수열의 일반항: $a_n=a+(n-1)d$"
+      },
+      {
+        "question": "세 수 $a,\\ b,\\ c$가 이 순서대로 등차수열을 이룰 때 성립하는 식은?",
+        "choices": [
+          "$2b=a+c$",
+          "$b^2=ac$",
+          "$b=a+c$",
+          "$2b=ac$",
+          "$b^2=a+c$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등차중항: $b=\\dfrac{a+c}{2}$, 즉 $2b=a+c$"
+      },
+      {
+        "question": "첫째항이 $a$, 제$n$항(끝항)이 $l$인 등차수열의 첫째항부터 제$n$항까지의 합 $S_n$은?",
+        "choices": [
+          "$\\dfrac{n(a+l)}{2}$",
+          "$n(a+l)$",
+          "$\\dfrac{(n-1)(a+l)}{2}$",
+          "$\\dfrac{a+l}{2}$",
+          "$\\dfrac{n(l-a)}{2}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등차수열의 합: $S_n=\\dfrac{n(a+l)}{2}$"
+      },
+      {
+        "question": "첫째항이 $a$, 공차가 $d$인 등차수열의 첫째항부터 제$n$항까지의 합 $S_n$은?",
+        "choices": [
+          "$\\dfrac{n\\{2a+(n-1)d\\}}{2}$",
+          "$\\dfrac{n\\{a+(n-1)d\\}}{2}$",
+          "$n\\{2a+(n-1)d\\}$",
+          "$\\dfrac{n\\{2a+nd\\}}{2}$",
+          "$\\dfrac{a(d^n-1)}{d-1}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$l=a+(n-1)d$를 $\\dfrac{n(a+l)}{2}$에 넣으면 $S_n=\\dfrac{n\\{2a+(n-1)d\\}}{2}$"
+      },
+      {
+        "question": "첫째항이 $a$, 공비가 $r$인 등비수열의 일반항 $a_n$은?",
+        "choices": [
+          "$a_n=ar^{n-1}$",
+          "$a_n=ar^n$",
+          "$a_n=a+(n-1)r$",
+          "$a_n=a^{n-1}r$",
+          "$a_n=ar^{n+1}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등비수열의 일반항: $a_n=ar^{n-1}$"
+      },
+      {
+        "question": "0이 아닌 세 수 $a,\\ b,\\ c$가 이 순서대로 등비수열을 이룰 때 성립하는 식은?",
+        "choices": [
+          "$b^2=ac$",
+          "$2b=a+c$",
+          "$b=ac$",
+          "$b^2=a+c$",
+          "$2b=ac$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등비중항: $b^2=ac$"
+      },
+      {
+        "question": "첫째항이 $a$, 공비가 $r\\ (r\\ne1)$인 등비수열의 첫째항부터 제$n$항까지의 합 $S_n$은?",
+        "choices": [
+          "$\\dfrac{a(r^n-1)}{r-1}$",
+          "$\\dfrac{a(r^{n-1}-1)}{r-1}$",
+          "$\\dfrac{a(r^n-1)}{r}$",
+          "$\\dfrac{n(a+ar^{n-1})}{2}$",
+          "$a(r^n-1)$"
+        ],
+        "correctIndex": 0,
+        "explanation": "등비수열의 합($r\\ne1$): $S_n=\\dfrac{a(r^n-1)}{r-1}=\\dfrac{a(1-r^n)}{1-r}$"
+      },
+      {
+        "question": "공비가 $r=1$인 등비수열의 첫째항부터 제$n$항까지의 합 $S_n$은? (첫째항 $a$)",
+        "choices": [
+          "$na$",
+          "$0$",
+          "$a$",
+          "$a(n-1)$",
+          "$a^n$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$r=1$이면 모든 항이 $a$이므로 $S_n=na$"
+      },
+      {
+        "question": "수열의 합 $S_n$과 일반항 $a_n$ 사이의 관계로 옳은 것은?",
+        "choices": [
+          "$a_1=S_1$, $a_n=S_n-S_{n-1}\\ (n\\ge2)$",
+          "$a_n=S_n-S_{n-1}\\ (n\\ge1)$",
+          "$a_n=S_n+S_{n-1}$",
+          "$a_n=S_{n+1}-S_n\\ (n\\ge2)$",
+          "$a_n=\\dfrac{S_n}{n}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a_1=S_1$, $a_n=S_n-S_{n-1}$ ($n\\ge2$). $n=1$일 때는 따로 확인한다."
+      },
+      {
+        "question": "$\\sum$의 성질로 옳지 않은 것은? (단, $c$는 상수)",
+        "choices": [
+          "$\\sum_{k=1}^{n}a_kb_k=\\sum_{k=1}^{n}a_k\\sum_{k=1}^{n}b_k$",
+          "$\\sum_{k=1}^{n}(a_k+b_k)=\\sum_{k=1}^{n}a_k+\\sum_{k=1}^{n}b_k$",
+          "$\\sum_{k=1}^{n}ca_k=c\\sum_{k=1}^{n}a_k$",
+          "$\\sum_{k=1}^{n}c=cn$",
+          "$\\sum_{k=1}^{n}(a_k-b_k)=\\sum_{k=1}^{n}a_k-\\sum_{k=1}^{n}b_k$"
+        ],
+        "correctIndex": 0,
+        "explanation": "곱의 합은 합의 곱과 다르다: $\\sum a_kb_k\\ne\\sum a_k\\sum b_k$"
+      },
+      {
+        "question": "$\\displaystyle\\sum_{k=1}^{n}k$의 값은?",
+        "choices": [
+          "$\\dfrac{n(n+1)}{2}$",
+          "$\\dfrac{n(n-1)}{2}$",
+          "$n(n+1)$",
+          "$\\dfrac{n(n+1)(2n+1)}{6}$",
+          "$\\dfrac{n^2}{2}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\sum_{k=1}^{n}k=1+2+\\cdots+n=\\dfrac{n(n+1)}{2}$"
+      },
+      {
+        "question": "$\\displaystyle\\sum_{k=1}^{n}k^2$의 값은?",
+        "choices": [
+          "$\\dfrac{n(n+1)(2n+1)}{6}$",
+          "$\\left\\{\\dfrac{n(n+1)}{2}\\right\\}^2$",
+          "$\\dfrac{n(n+1)(2n+1)}{3}$",
+          "$\\dfrac{n(n+1)(n+2)}{6}$",
+          "$\\dfrac{n^2(n+1)}{2}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\sum_{k=1}^{n}k^2=\\dfrac{n(n+1)(2n+1)}{6}$"
+      },
+      {
+        "question": "$\\displaystyle\\sum_{k=1}^{n}k^3$의 값은?",
+        "choices": [
+          "$\\left\\{\\dfrac{n(n+1)}{2}\\right\\}^2$",
+          "$\\dfrac{n(n+1)(2n+1)}{6}$",
+          "$\\dfrac{n^2(n+1)^2}{2}$",
+          "$\\dfrac{n^3(n+1)}{4}$",
+          "$\\left\\{\\dfrac{n(n+1)}{2}\\right\\}^3$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\sum_{k=1}^{n}k^3=\\left\\{\\dfrac{n(n+1)}{2}\\right\\}^2$ ($\\sum k$의 제곱)"
+      },
+      {
+        "question": "$\\displaystyle\\sum_{k=1}^{10}k^2$의 값은?",
+        "choices": [
+          "$385$",
+          "$55$",
+          "$3025$",
+          "$330$",
+          "$505$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac{10\\cdot11\\cdot21}{6}=385$"
+      },
+      {
+        "question": "$\\dfrac{1}{k(k+1)}$을 부분분수로 바르게 나타낸 것은?",
+        "choices": [
+          "$\\dfrac1k-\\dfrac1{k+1}$",
+          "$\\dfrac1k+\\dfrac1{k+1}$",
+          "$\\dfrac1{k+1}-\\dfrac1k$",
+          "$\\dfrac12\\left(\\dfrac1k-\\dfrac1{k+1}\\right)$",
+          "$\\dfrac{1}{k}\\cdot\\dfrac1{k+1}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac1{AB}=\\dfrac1{B-A}\\left(\\dfrac1A-\\dfrac1B\\right)$에서 $B-A=1$이므로 $\\dfrac1k-\\dfrac1{k+1}$"
+      },
+      {
+        "question": "$\\displaystyle\\sum_{k=1}^{n}\\frac{1}{k(k+1)}$의 값은?",
+        "choices": [
+          "$\\dfrac{n}{n+1}$",
+          "$\\dfrac{1}{n+1}$",
+          "$\\dfrac{n+1}{n}$",
+          "$1$",
+          "$\\dfrac{n}{2(n+1)}$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\left(1-\\frac12\\right)+\\left(\\frac12-\\frac13\\right)+\\cdots=1-\\dfrac1{n+1}=\\dfrac{n}{n+1}$"
+      },
+      {
+        "question": "수열 $\\{a_n\\}$을 귀납적으로 정의한다는 것의 뜻으로 옳은 것은?",
+        "choices": [
+          "첫째항과, 이웃하는 항 사이의 관계식으로 수열을 정의하는 것",
+          "일반항 $a_n$을 $n$의 식으로 나타내는 것",
+          "모든 항을 나열하는 것",
+          "합 $S_n$만으로 수열을 나타내는 것",
+          "첫째항만으로 수열을 정하는 것"
+        ],
+        "correctIndex": 0,
+        "explanation": "수열의 귀납적 정의: 첫째항 $a_1$과 $a_n$, $a_{n+1}$ 사이의 관계식으로 모든 항을 차례로 정한다."
+      },
+      {
+        "question": "$a_{n+1}=a_n+d$ ($n=1,2,3,\\cdots$)로 정의된 수열은?",
+        "choices": [
+          "공차가 $d$인 등차수열",
+          "공비가 $d$인 등비수열",
+          "계차가 $d$인 등비수열",
+          "상수수열",
+          "공차가 $a_n$인 등차수열"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a_{n+1}-a_n=d$ (일정) → 공차 $d$인 등차수열"
+      },
+      {
+        "question": "$a_{n+1}=ra_n$ ($n=1,2,3,\\cdots$)으로 정의된 수열은?",
+        "choices": [
+          "공비가 $r$인 등비수열",
+          "공차가 $r$인 등차수열",
+          "첫째항이 $r$인 등차수열",
+          "상수수열",
+          "공비가 $a_n$인 등비수열"
+        ],
+        "correctIndex": 0,
+        "explanation": "$\\dfrac{a_{n+1}}{a_n}=r$ (일정) → 공비 $r$인 등비수열"
+      },
+      {
+        "question": "모든 자연수 $n$에 대하여 $2a_{n+1}=a_n+a_{n+2}$가 성립하는 수열은?",
+        "choices": [
+          "등차수열",
+          "등비수열",
+          "상수수열만",
+          "조화수열",
+          "알 수 없다"
+        ],
+        "correctIndex": 0,
+        "explanation": "연속한 세 항에서 가운데 항이 등차중항 → 등차수열"
+      },
+      {
+        "question": "모든 자연수 $n$에 대하여 $a_{n+1}^{\\,2}=a_na_{n+2}$ ($a_n\\ne0$)가 성립하는 수열은?",
+        "choices": [
+          "등비수열",
+          "등차수열",
+          "계차수열",
+          "조화수열",
+          "알 수 없다"
+        ],
+        "correctIndex": 0,
+        "explanation": "연속한 세 항에서 가운데 항이 등비중항 → 등비수열"
+      },
+      {
+        "question": "$a_1=2$, $a_{n+1}=a_n+3$으로 정의된 수열 $\\{a_n\\}$의 제10항은?",
+        "choices": [
+          "$29$",
+          "$32$",
+          "$30$",
+          "$27$",
+          "$2\\cdot3^9$"
+        ],
+        "correctIndex": 0,
+        "explanation": "공차 3인 등차수열: $a_{10}=2+9\\times3=29$"
+      },
+      {
+        "question": "$a_1=1$, $a_{n+1}=2a_n$으로 정의된 수열 $\\{a_n\\}$의 제6항은?",
+        "choices": [
+          "$32$",
+          "$64$",
+          "$12$",
+          "$11$",
+          "$16$"
+        ],
+        "correctIndex": 0,
+        "explanation": "공비 2인 등비수열: $a_6=1\\times2^5=32$"
+      },
+      {
+        "question": "$a_{n+1}=a_n+f(n)$으로 정의된 수열의 일반항을 구하는 식으로 옳은 것은? ($n\\ge2$)",
+        "choices": [
+          "$a_n=a_1+\\sum_{k=1}^{n-1}f(k)$",
+          "$a_n=a_1+\\sum_{k=1}^{n}f(k)$",
+          "$a_n=a_1\\times\\sum_{k=1}^{n-1}f(k)$",
+          "$a_n=f(n)-a_1$",
+          "$a_n=a_1+(n-1)f(n)$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a_2=a_1+f(1),\\ a_3=a_2+f(2),\\ \\cdots$ 을 모두 더하면 $a_n=a_1+\\sum_{k=1}^{n-1}f(k)$"
+      },
+      {
+        "question": "$a_1=2$, $a_{n+1}=a_n+2n$으로 정의된 수열의 $a_4$의 값은?",
+        "choices": [
+          "$14$",
+          "$12$",
+          "$10$",
+          "$20$",
+          "$8$"
+        ],
+        "correctIndex": 0,
+        "explanation": "$a_2=2+2=4$, $a_3=4+4=8$, $a_4=8+6=14$"
+      }
+    ]
+  },
+  {
     id: 'social-population',
     subject: '통합사회',
     title: 'V-01~02 세계의 인구와 인구 문제',

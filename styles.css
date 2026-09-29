@@ -342,3 +342,6 @@ body.in-test main { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px
 
 .switch-row.inline { margin-block-start: 16px; padding: 12px 14px; background: var(--bg); }
 .block { display: block; }
+
+.katex { font-size: 1.05em; }
+.choice > span:last-child, .question, .feedback .why, .qitem .q, .qitem li { min-width: 0; overflow-x: auto; overflow-y: hidden; }

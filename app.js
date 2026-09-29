@@ -131,6 +131,22 @@
     return String(s ?? '').replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+  // 문제 글의 $...$ 부분을 수식(KaTeX)으로 그린다. KaTeX를 못 불러오면 글자 그대로 보여 준다.
+  function tx(s) {
+    const str = String(s ?? '');
+    if (!str.includes('$')) return esc(str);
+    return str.split(/(\$[^$]+\$)/g).map((part) => {
+      if (part.length > 2 && part.startsWith('$') && part.endsWith('$')) {
+        const src = part.slice(1, -1);
+        if (window.katex) {
+          try { return window.katex.renderToString(src, { throwOnError: false, output: 'html' }); } catch {}
+        }
+        return esc(src);
+      }
+      return esc(part);
+    }).join('');
+  }
+
   function shuffled(list) {
     const a = list.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -281,9 +297,9 @@
     if (!box.hidden) { box.hidden = true; $('btn-toggle-answers').textContent = '정답 보기'; return; }
     box.innerHTML = state.set.questions.map((q, i) => `
       <div class="qitem">
-        <p class="q">${i + 1}. ${esc(q.question)}</p>
-        <ol>${q.choices.map((c, j) => `<li class="${j === q.correctIndex ? 'correct' : ''}">${CIRCLED[j]} ${esc(c)}</li>`).join('')}</ol>
-        <p class="why">${esc(q.explanation)}</p>
+        <p class="q">${i + 1}. ${tx(q.question)}</p>
+        <ol>${q.choices.map((c, j) => `<li class="${j === q.correctIndex ? 'correct' : ''}">${CIRCLED[j]} ${tx(c)}</li>`).join('')}</ol>
+        <p class="why">${tx(q.explanation)}</p>
       </div>`).join('');
     box.hidden = false;
     $('btn-toggle-answers').textContent = '정답 숨기기';
@@ -343,7 +359,7 @@
     $('progress-bar').style.width = `${(answered / total) * 100}%`;
     $('test-no').textContent = `${state.no + 1} / ${total}`;
     $('test-score').textContent = answered ? `맞음 ${right} · 틀림 ${answered - right}` : '';
-    $('test-question').textContent = q.question;
+    $('test-question').innerHTML = tx(q.question);
     $('btn-figure').hidden = !q.img;
     $('btn-figure').classList.toggle('need', !!q.figure);
     $('btn-figure-text').textContent = q.figure ? '자료를 보고 푸는 문제 · 사진 보기' : '원본 사진 보기';
@@ -357,7 +373,7 @@
       if (done) cls += i === q.correctIndex ? ' right' : i === chosen ? ' wrong' : ' dim';
       b.className = cls;
       b.disabled = done;
-      b.innerHTML = `<span class="n">${CIRCLED[i]}</span><span>${esc(c)}</span>`;
+      b.innerHTML = `<span class="n">${CIRCLED[i]}</span><span>${tx(c)}</span>`;
       b.onclick = () => answer(i);
       box.append(b);
     });
@@ -368,7 +384,7 @@
       const ok = chosen === q.correctIndex;
       fb.className = `feedback ${ok ? 'ok' : 'no'}`;
       $('feedback-verdict').textContent = ok ? '정답이에요' : `틀렸어요 · 정답은 ${CIRCLED[q.correctIndex]}`;
-      $('feedback-why').textContent = q.explanation;
+      $('feedback-why').innerHTML = tx(q.explanation);
     }
 
     const last = state.no === total - 1;
@@ -479,10 +495,10 @@
           const mine = state.answers[i];
           return `<div class="witem">
             ${state.set.combined || state.set.review ? `<p class="from">${esc(q.from)}</p>` : ''}
-            <p class="q">${esc(q.question)}</p>
-            <p class="line mine">내 답: ${mine === -1 ? '(안 풂)' : `${CIRCLED[mine]} ${esc(q.choices[mine])}`}</p>
-            <p class="line ans">정답: ${CIRCLED[q.correctIndex]} ${esc(q.choices[q.correctIndex])}</p>
-            <p class="why">${esc(q.explanation)}</p>
+            <p class="q">${tx(q.question)}</p>
+            <p class="line mine">내 답: ${mine === -1 ? '(안 풂)' : `${CIRCLED[mine]} ${tx(q.choices[mine])}`}</p>
+            <p class="line ans">정답: ${CIRCLED[q.correctIndex]} ${tx(q.choices[q.correctIndex])}</p>
+            <p class="why">${tx(q.explanation)}</p>
           </div>`;
         }).join('')
       : '<p class="muted">전부 맞았어요!</p>';
@@ -513,9 +529,9 @@
       card.className = 'card witem';
       card.innerHTML = `
         <p class="from">${esc(q.from)}${q.misses > 1 ? ` · ${q.misses}번 틀림` : ''}</p>
-        <p class="q">${esc(q.question)}</p>
-        <p class="line ans">정답: ${esc(q.choices[q.correctIndex])}</p>
-        <p class="why">${esc(q.explanation)}</p>
+        <p class="q">${tx(q.question)}</p>
+        <p class="line ans">정답: ${tx(q.choices[q.correctIndex])}</p>
+        <p class="why">${tx(q.explanation)}</p>
         <div class="btn-row"><button class="btn text small">노트에서 빼기</button></div>`;
       card.querySelector('button').onclick = () => {
         delete store.wrong[q.qid];
